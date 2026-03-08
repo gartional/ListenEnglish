@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ListenEnglish 听力练习 · 中英对照</title>
+  <style>
+    :root {
+      --bg: #050816;
+      --panel: #0b1220;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --success: #4ade80;
+      --blur: 8px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 16px;
+      line-height: 1.5;
+    }
+    .container { max-width: 720px; margin: 0 auto; }
+    h1 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #fff;
+    }
+    .subtitle {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+    audio {
+      width: 100%;
+      margin-bottom: 12px;
+      border-radius: 8px;
+    }
+    .cues {
+      max-height: 420px;
+      overflow-y: auto;
+      border-radius: 10px;
+      background: var(--panel);
+      padding: 12px 10px;
+      box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.6);
+    }
+    .cue-row {
+      padding: 10px 10px 12px;
+      border-radius: 8px;
+      margin-bottom: 4px;
+      transition: background 0.2s, transform 0.2s;
+      border: 1px solid transparent;
+    }
+    .cue-row:hover { background: rgba(30, 41, 59, 0.5); }
+    .cue-row.active {
+      background: rgba(30, 41, 59, 0.8);
+      border-color: rgba(56, 189, 248, 0.3);
+    }
+    .cue-row.revealed { border-color: rgba(74, 222, 128, 0.25); }
+    .cue-row.revealed .sentence-block { filter: none; opacity: 1; }
+    .cue-row.revealed .reveal-btn { display: none; }
+    .cue-row .sentence-block {
+      filter: blur(var(--blur));
+      opacity: 0.65;
+      user-select: none;
+      transition: filter 0.35s ease, opacity 0.35s ease;
+      pointer-events: none;
+    }
+    .cue-row.revealed .sentence-block { pointer-events: auto; }
+    .time {
+      font-size: 11px;
+      color: var(--muted);
+      margin-right: 10px;
+      white-space: nowrap;
+      vertical-align: top;
+    }
+    .lines {
+      display: inline-block;
+      vertical-align: top;
+      max-width: calc(100% - 52px);
+    }
+    .en { font-size: 15px; margin-bottom: 4px; }
+    .zh { font-size: 14px; color: var(--muted); }
+    .word {
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      color: var(--accent);
+      border-radius: 2px;
+      padding: 0 1px;
+    }
+    .word:hover { background: rgba(56, 189, 248, 0.2); }
+    .reveal-btn {
+      margin-top: 8px;
+      padding: 6px 14px;
+      font-size: 13px;
+      border: none;
+      border-radius: 6px;
+      background: var(--accent);
+      color: #0f172a;
+      cursor: pointer;
+      font-weight: 500;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .reveal-btn:hover {
+      transform: scale(1.02);
+      box-shadow: 0 2px 12px rgba(56, 189, 248, 0.4);
+    }
+    .reveal-btn:active { transform: scale(0.98); }
+    .celebrate-wrap {
+      display: inline-block;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+    .celebrate {
+      display: none;
+      font-size: 20px;
+      animation: popIn 0.45s ease-out;
+    }
+    .cue-row.revealed .celebrate { display: inline-block; }
+    @keyframes popIn {
+      0% { transform: scale(0); opacity: 0; }
+      60% { transform: scale(1.25); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .confetti {
+      position: fixed;
+      pointer-events: none;
+      z-index: 100;
+      left: 0;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      overflow: hidden;
+    }
+    .confetti-dot {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      animation: confettiFall 1.2s ease-out forwards;
+    }
+    @keyframes confettiFall {
+      0% {
+        transform: translateY(-20px) rotate(0deg);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(120px) rotate(360deg);
+        opacity: 0;
+      }
+    }
+    /* 单词释义浮层 */
+    .word-tooltip {
+      position: fixed;
+      z-index: 200;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 12px 14px;
+      max-width: 320px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+      animation: tooltipIn 0.2s ease-out;
+    }
+    @keyframes tooltipIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .word-tooltip .head {
+      font-weight: 600;
+      color: var(--accent);
+      margin-bottom: 6px;
+      font-size: 15px;
+    }
+    .word-tooltip .meaning { color: #cbd5e1; margin-bottom: 6px; font-size: 14px; }
+    .word-tooltip .note { color: var(--muted); font-size: 13px; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>听力练习 · 中英对照</h1>
+  <p class="subtitle">先听音频，复述（英文或中文）大概对了再点「我复述完了」，本句会变清晰并解锁生词点击。</p>
+
+  <audio id="audio" controls src="./audio.mp3"></audio>
+  <div id="cues" class="cues"></div>
+</div>
+<div id="confetti" class="confetti" aria-hidden="true"></div>
+
+<script>
+  function formatTime(sec) {
+    const s = Math.floor(sec);
+    const m = Math.floor(s / 60);
+    const r = s % 60;
+    return m.toString().padStart(2, "0") + ":" + r.toString().padStart(2, "0");
+  }
+
+  const audioEl = document.getElementById("audio");
+  const cuesContainer = document.getElementById("cues");
+  const confettiEl = document.getElementById("confetti");
+  let cues = [];
+  let glossary = {};
+  let activeIndex = null;
+  let revealed = new Set();
+
+  // 成功音效（Web Audio 两音）
+  function playSuccessSound() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const play = (freq, start, dur) => {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.connect(g);
+        g.connect(ctx.destination);
+        o.frequency.value = freq;
+        o.type = "sine";
+        g.gain.setValueAtTime(0.15, start);
+        g.gain.exponentialRampToValueAtTime(0.01, start + dur);
+        o.start(start);
+        o.stop(start + dur);
+      };
+      play(523.25, 0, 0.08);
+      play(659.25, 0.1, 0.12);
+    } catch (e) {}
+  }
+
+  function showConfetti(el) {
+    const rect = el.getBoundingClientRect();
+    const x = rect.left + rect.width / 2;
+    const y = rect.top + rect.height / 2;
+    const colors = ["#4ade80", "#38bdf8", "#fbbf24", "#f472b6"];
+    for (let i = 0; i < 12; i++) {
+      const d = document.createElement("div");
+      d.className = "confetti-dot";
+      d.style.left = x + (Math.random() - 0.5) * 80 + "px";
+      d.style.top = y + "px";
+      d.style.background = colors[Math.floor(Math.random() * colors.length)];
+      d.style.animationDelay = Math.random() * 0.2 + "s";
+      confettiEl.appendChild(d);
+      setTimeout(() => d.remove(), 1400);
+    }
+  }
+
+  // 按词/词组切分并匹配 glossary（长词组优先）
+  function wrapWords(text, glossaryKeys) {
+    if (!glossaryKeys.length) return document.createTextNode(text);
+    const frag = document.createDocumentFragment();
+    let i = 0;
+    const lower = text.toLowerCase();
+    while (i < text.length) {
+      let found = false;
+      for (const key of glossaryKeys) {
+        const keyLen = key.length;
+        if (i + keyLen > text.length) continue;
+        const sub = lower.slice(i, i + keyLen);
+        const origSub = text.slice(i, i + keyLen);
+        const atEnd = i + keyLen >= text.length;
+        const boundaryAfter = atEnd || /[\s.,;:!?"')\]}]/.test(text[i + keyLen]);
+        if (sub === key && boundaryAfter) {
+          const span = document.createElement("span");
+          span.className = "word";
+          span.dataset.key = key;
+          span.textContent = origSub;
+          frag.appendChild(span);
+          i += keyLen;
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        const nextSpace = text.indexOf(" ", i + 1);
+        const end = nextSpace === -1 ? text.length : nextSpace + 1;
+        frag.appendChild(document.createTextNode(text.slice(i, end)));
+        i = end;
+      }
+    }
+    return frag;
+  }
+
+  function renderCues() {
+    const keys = Object.keys(glossary).sort((a, b) => b.length - a.length);
+    cuesContainer.innerHTML = "";
+    cues.forEach((cue, index) => {
+      const row = document.createElement("div");
+      row.className = "cue-row";
+      row.dataset.index = String(index);
+      if (revealed.has(index)) row.classList.add("revealed");
+
+      const timeSpan = document.createElement("span");
+      timeSpan.className = "time";
+      timeSpan.textContent = formatTime(cue.start) + "–" + formatTime(cue.end);
+
+      const lines = document.createElement("div");
+      lines.className = "lines";
+      const block = document.createElement("div");
+      block.className = "sentence-block";
+      const en = document.createElement("div");
+      en.className = "en";
+      en.appendChild(wrapWords(cue.text, keys));
+      const zh = document.createElement("div");
+      zh.className = "zh";
+      zh.textContent = cue.zh || "（暂无中文）";
+      block.appendChild(en);
+      block.appendChild(zh);
+      lines.appendChild(block);
+
+      const btnWrap = document.createElement("div");
+      const btn = document.createElement("button");
+      btn.className = "reveal-btn";
+      btn.type = "button";
+      btn.textContent = "我复述完了";
+      const celebrate = document.createElement("span");
+      celebrate.className = "celebrate";
+      celebrate.textContent = "✓";
+      celebrate.setAttribute("aria-hidden", "true");
+      btnWrap.appendChild(btn);
+      btnWrap.appendChild(celebrate);
+
+      row.appendChild(timeSpan);
+      row.appendChild(lines);
+      row.appendChild(btnWrap);
+      cuesContainer.appendChild(row);
+
+      row.addEventListener("click", (e) => {
+        if (e.target.closest(".reveal-btn")) return;
+        if (e.target.closest(".word")) return;
+        audioEl.currentTime = Math.max(0, cue.start - 0.2);
+        audioEl.play();
+      });
+
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (revealed.has(index)) return;
+        revealed.add(index);
+        row.classList.add("revealed");
+        playSuccessSound();
+        showConfetti(row);
+      });
+    });
+
+    cuesContainer.querySelectorAll(".word").forEach((el) => {
+      el.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const key = el.dataset.key;
+        const entry = glossary[key];
+        if (!entry) return;
+        const tip = document.createElement("div");
+        tip.className = "word-tooltip";
+        tip.innerHTML =
+          "<div class=\"head\">" + escapeHtml(key) + "</div>" +
+          "<div class=\"meaning\">" + escapeHtml(entry.meaning) + "</div>" +
+          (entry.note ? "<div class=\"note\">" + escapeHtml(entry.note) + "</div>" : "");
+        document.body.appendChild(tip);
+        const rect = el.getBoundingClientRect();
+        tip.style.left = Math.min(rect.left, window.innerWidth - tip.offsetWidth - 16) + "px";
+        tip.style.top = (rect.top - tip.offsetHeight - 8) + "px";
+        if (parseInt(tip.style.top, 10) < 8) tip.style.top = rect.bottom + 8 + "px";
+        tip.addEventListener("click", (e) => e.stopPropagation());
+        const close = () => {
+          tip.remove();
+          document.removeEventListener("click", close);
+        };
+        requestAnimationFrame(() => document.addEventListener("click", close));
+      });
+    });
+  }
+
+  function escapeHtml(s) {
+    const div = document.createElement("div");
+    div.textContent = s;
+    return div.innerHTML;
+  }
+
+  // 加载 cues（优先带中文）
+  Promise.all([
+    fetch("./cues-i18n.json").then((r) => (r.ok ? r.json() : null)).catch(() => null),
+    fetch("./cues.json").then((r) => r.json()),
+    fetch("./glossary.json").then((r) => (r.ok ? r.json() : {})).catch(() => ({}))
+  ]).then(([i18n, fallback, vocab]) => {
+    cues = Array.isArray(i18n) && i18n.length ? i18n : fallback;
+    if (Array.isArray(cues) && cues.length && !cues[0].zh && Array.isArray(i18n) && i18n.length) {
+      cues = i18n;
+    }
+    glossary = vocab || {};
+    renderCues();
+  }).catch((err) => {
+    console.error(err);
+    cuesContainer.innerHTML = "<p>加载字幕或词表失败，请检查 cues.json / cues-i18n.json / glossary.json。</p>";
+  });
+
+  audioEl.addEventListener("timeupdate", () => {
+    if (!cues.length) return;
+    const t = audioEl.currentTime;
+    let idx = null;
+    for (let i = 0; i < cues.length; i++) {
+      const c = cues[i];
+      if (t >= c.start && t < c.end) {
+        idx = i;
+        break;
+      }
+    }
+    if (idx === null || idx === activeIndex) return;
+    activeIndex = idx;
+    const rows = cuesContainer.querySelectorAll(".cue-row");
+    rows.forEach((row, i) => {
+      if (i === idx) {
+        row.classList.add("active");
+        const containerTop = cuesContainer.getBoundingClientRect().top;
+        const rowTop = row.getBoundingClientRect().top;
+        const offset = rowTop - containerTop - cuesContainer.clientHeight / 2;
+        cuesContainer.scrollTop += offset;
+      } else {
+        row.classList.remove("active");
+      }
+    });
+  });
+</script>
+</body>
+</html>

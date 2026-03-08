@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ListenEnglish 听力练习 · 中英对照</title>
+  <style>
+    :root {
+      --bg: #050816;
+      --panel: #0b1220;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --success: #4ade80;
+      --blur: 8px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 16px;
+      line-height: 1.5;
+    }
+    .container { max-width: 720px; margin: 0 auto; }
+    h1 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #fff;
+    }
+    .subtitle {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+    .player-wrap {
+      margin-bottom: 12px;
+    }
+    .player-wrap audio {
+      width: 100%;
+      border-radius: 8px;
+      display: block;
+    }
+    .player-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 6px;
+    }
+    .player-time {
+      font-size: 12px;
+      color: var(--muted);
+      min-width: 36px;
+    }
+    .player-track {
+      flex: 1;
+      height: 24px;
+      position: relative;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+    }
+    .player-track::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 100%;
+      height: 6px;
+      background: #334155;
+      border-radius: 3px;
+    }
+    .player-fill {
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      height: 6px;
+      width: 0%;
+      background: var(--accent);
+      border-radius: 3px;
+      pointer-events: none;
+    }
+    .player-track:active { cursor: grabbing; }
+    .cues {
+      max-height: 420px;
+      overflow-y: auto;
+      border-radius: 10px;
+      background: var(--panel);
+      padding: 12px 10px;
+      box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.6);
+    }
+    .cue-row {
+      padding: 10px 10px 12px;
+      border-radius: 8px;
+      margin-bottom: 4px;
+      transition: background 0.2s, transform 0.2s;
+      border: 1px solid transparent;
+    }
+    .cues-hint { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+    .cue-row { cursor: pointer; }
+    .cue-row:hover { background: rgba(30, 41, 59, 0.5); }
+    .cue-row.active {
+      background: rgba(30, 41, 59, 0.8);
+      border-color: rgba(56, 189, 248, 0.3);
+    }
+    .cue-row.revealed { border-color: rgba(74, 222, 128, 0.25); }
+    .time {
+      font-size: 11px;
+      color: var(--muted);
+      margin-right: 10px;
+      white-space: nowrap;
+      vertical-align: top;
+    }
+    .lines {
+      display: inline-block;
+      vertical-align: top;
+      max-width: calc(100% - 52px);
+    }
+    .en { font-size: 15px; margin-bottom: 4px; }
+    .zh { font-size: 14px; color: var(--muted); }
+    .word {
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      color: var(--accent);
+      border-radius: 2px;
+      padding: 0 1px;
+    }
+    .word:hover { background: rgba(56, 189, 248, 0.2); }
+    .reveal-btn {
+      margin-top: 8px;
+      padding: 6px 14px;
+      font-size: 13px;
+      border: none;
+      border-radius: 6px;
+      background: var(--accent);
+      color: #0f172a;
+      cursor: pointer;
+      font-weight: 500;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .reveal-btn:hover {
+      transform: scale(1.02);
+      box-shadow: 0 2px 12px rgba(56, 189, 248, 0.4);
+    }
+    .celebrate-wrap {
+      display: inline-block;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+    .celebrate {
+      display: none;
+      font-size: 20px;
+      animation: popIn 0.45s ease-out;
+    }
+    .cue-row.revealed .celebrate { display: inline-block; }
+    @keyframes popIn {
+      0% { transform: scale(0); opacity: 0; }
+      60% { transform: scale(1.25); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .confetti {
+      position: fixed;
+      pointer-events: none;
+      z-index: 100;
+      left: 0;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      overflow: hidden;
+    }
+    .confetti-dot {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      animation: confettiFall 1.2s ease-out forwards;
+    }
+    @keyframes confettiFall {
+      0% {
+        transform: translateY(-20px) rotate(0deg);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(120px) rotate(360deg);
+        opacity: 0;
+      }
+    }
+    .word-tooltip {
+      position: fixed;
+      z-index: 200;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 12px 14px;
+      max-width: 320px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+      animation: tooltipIn 0.2s ease-out;
+    }
+    @keyframes tooltipIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .word-tooltip .head {
+      font-weight: 600;
+      color: var(--accent);
+      margin-bottom: 6px;
+      font-size: 15px;
+    }
+    .word-tooltip .meaning { color: #cbd5e1; margin-bottom: 6px; font-size: 14px; }
+    .word-tooltip .note { color: var(--muted); font-size: 13px; }
+
+    .recite-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .recite-btn {
+      padding: 8px 16px;
+      font-size: 14px;
+      font-weight: 500;
+      border: none;
+      border-radius: 8px;
+      background: var(--accent);
+      color: #0f172a;
+      cursor: pointer;
+    }
+    .recite-btn:hover { opacity: 0.9; }
+    .recite-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .recite-btn.listening {
+      background: #f59e0b;
+      color: #0f172a;
+      animation: pulse 1s ease-in-out infinite;
+    }
+    @keyframes pulse { 50% { opacity: 0.85; } }
+    .recite-lang {
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid #334155;
+      background: var(--panel);
+      color: var(--text);
+      font-size: 13px;
+    }
+    .recite-status {
+      font-size: 13px;
+      color: var(--muted);
+      min-height: 20px;
+    }
+    .recite-status.success { color: var(--success); }
+    .recite-status.fail { color: #f87171; }
+    .recite-api-toggle {
+      font-size: 12px;
+      color: var(--muted);
+      cursor: pointer;
+      margin-left: auto;
+    }
+    .recite-api-toggle input { margin-right: 4px; }
+    .stt-api-config {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+    .stt-api-config input {
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: 1px solid #334155;
+      background: var(--panel);
+      color: var(--text);
+      font-size: 13px;
+    }
+    .api-key-row { display: flex; align-items: center; gap: 8px; }
+    .api-key-row input { flex: 1; }
+    #apiKeyHelp { font-size: 13px; color: var(--accent); white-space: nowrap; }
+    .word-blurred { filter: blur(var(--blur)); opacity: 0.65; user-select: none; pointer-events: none; transition: filter 0.3s, opacity 0.3s; }
+    .word-revealed { filter: none; opacity: 1; }
+    .cue-row.revealed .word-blurred { filter: none; opacity: 1; pointer-events: auto; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>听力练习 · 中英对照</h1>
+  <p class="subtitle">以练听力为主，不必复述英文。听完整段后点「复述」，用<strong>中文说出意思</strong>即可，说对会逐步变清晰。</p>
+
+  <div class="player-wrap">
+    <audio id="audio" controls preload="auto"></audio>
+    <div class="player-bar">
+      <span id="timeCurrent" class="player-time">0:00</span>
+      <div class="player-track" id="playerTrack" title="点击或拖动进度条跳转">
+        <div class="player-fill" id="playerFill"></div>
+      </div>
+      <span id="timeTotal" class="player-time">0:00</span>
+    </div>
+  </div>
+
+  <div class="recite-bar">
+    <button type="button" id="reciteBtn" class="recite-btn">复述（说中文意思）</button>
+    <span id="reciteStatus" class="recite-status" aria-live="polite"></span>
+    <label class="recite-api-toggle">
+      <input type="checkbox" id="useSttApi" /> 使用外部语音识别 API
+    </label>
+  </div>
+  <div id="sttApiConfig" class="stt-api-config" hidden>
+    <input type="text" id="sttApiUrl" placeholder="API 地址（OpenAI Whisper: https://api.openai.com/v1/audio/transcriptions）" />
+    <div class="api-key-row">
+      <input type="password" id="sttApiKey" placeholder="API Key（必填，用于 OpenAI 等）" />
+      <a id="apiKeyHelp" href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">如何获取？</a>
+    </div>
+    <span class="recite-status">ChatGPT 会员在 <strong>platform.openai.com</strong> → 登录 → API keys → Create new secret key。API 需返回 JSON：<code>{"text": "识别结果"}</code></span>
+  </div>
+
+  <p class="cues-hint">点击下方任意段落，播放器会跳转到该句并播放</p>
+  <div id="cues" class="cues"></div>
+</div>
+<div id="confetti" class="confetti" aria-hidden="true"></div>
+
+<script>
+  var BASE = "content/voa/items/877f906f3748";
+  // 默认使用你的 OpenAI Key，页面会自动填入输入框。上线给他人用时务必改为后端代理，Key 放服务器，否则会暴露且易被滥用
+  var DEFAULT_STT_API_KEY = "";
+  var DEFAULT_STT_API_URL = "https://api.openai.com/v1/audio/transcriptions";
+
+  function formatTime(sec) {
+    var s = Math.floor(sec);
+    var m = Math.floor(s / 60);
+    var r = s % 60;
+    return m.toString().padStart(2, "0") + ":" + r.toString().padStart(2, "0");
+  }
+
+  var audioEl = document.getElementById("audio");
+  var playerTrack = document.getElementById("playerTrack");
+  var playerFill = document.getElementById("playerFill");
+  var timeCurrent = document.getElementById("timeCurrent");
+  var timeTotal = document.getElementById("timeTotal");
+  var cuesContainer = document.getElementById("cues");
+  var confettiEl = document.getElementById("confetti");
+  audioEl.src = BASE + "/audio.mp3";
+  audioEl.load();
+
+  function pctFromEvent(e) {
+    var track = playerTrack;
+    if (!track) return 0;
+    var rect = track.getBoundingClientRect();
+    var x = (e && (e.clientX != null)) ? e.clientX : (e && e.touches && e.touches[0] ? e.touches[0].clientX : rect.left);
+    var pct = ((x - rect.left) / rect.width) * 100;
+    return Math.max(0, Math.min(100, pct));
+  }
+  function seekToPercent(pct) {
+    pct = Math.max(0, Math.min(100, pct));
+    var d = audioEl.duration;
+    if (d && isFinite(d)) {
+      audioEl.currentTime = (pct / 100) * d;
+      return;
+    }
+    var once = function() {
+      audioEl.removeEventListener("loadedmetadata", once);
+      updateDuration();
+      seekToPercent(pct);
+    };
+    audioEl.addEventListener("loadedmetadata", once);
+    audioEl.load();
+  }
+  function updateDuration() {
+    var d = audioEl.duration;
+    if (d && isFinite(d)) timeTotal.textContent = formatTime(d);
+  }
+  audioEl.addEventListener("loadedmetadata", updateDuration);
+  audioEl.addEventListener("durationchange", updateDuration);
+  audioEl.addEventListener("timeupdate", function() {
+    var t = audioEl.currentTime;
+    var d = audioEl.duration;
+    var pct = (d && isFinite(d)) ? (t / d) * 100 : 0;
+    if (playerFill) playerFill.style.width = pct + "%";
+    timeCurrent.textContent = formatTime(t);
+  });
+  var trackDragging = false;
+  if (playerTrack) {
+    playerTrack.addEventListener("mousedown", function(e) {
+      e.preventDefault();
+      trackDragging = true;
+      seekToPercent(pctFromEvent(e));
+    });
+  }
+  document.addEventListener("mousemove", function(e) {
+    if (!trackDragging || !playerTrack) return;
+    seekToPercent(pctFromEvent(e));
+  });
+  document.addEventListener("mouseup", function() { trackDragging = false; });
+  document.addEventListener("mouseleave", function() { trackDragging = false; });
+  if (playerTrack) {
+    playerTrack.addEventListener("touchstart", function(e) {
+      trackDragging = true;
+      seekToPercent(pctFromEvent(e));
+    }, { passive: true });
+    playerTrack.addEventListener("touchmove", function(e) {
+      if (trackDragging) seekToPercent(pctFromEvent(e));
+    }, { passive: true });
+    playerTrack.addEventListener("touchend", function() { trackDragging = false; });
+  }
+  function seekToTime(t) {
+    var d = audioEl.duration;
+    if (d && isFinite(d)) {
+      audioEl.currentTime = Math.max(0, Math.min(t, d));
+      audioEl.play();
+      return;
+    }
+    var once = function() {
+      audioEl.removeEventListener("loadedmetadata", once);
+      audioEl.currentTime = Math.max(0, t);
+      audioEl.play();
+    };
+    audioEl.addEventListener("loadedmetadata", once);
+    audioEl.load();
+  }
+  cuesContainer.addEventListener("click", function(e) {
+    var row = e.target.closest(".cue-row");
+    if (!row) return;
+    if (e.target.closest("[data-key]")) return;
+    var idx = parseInt(row.getAttribute("data-index"), 10);
+    if (isNaN(idx)) return;
+    if (!cues.length || !cues[idx]) return;
+    var c = cues[idx];
+    seekToTime(c.start - 0.2);
+  });
+
+  var cues = [];
+  var glossary = {};
+  var activeIndex = null;
+  var revealedWords = new Set();
+  var revealedSentences = new Set();
+  var allEnWords = new Set();
+  var allZhTokens = new Set();
+
+  var reciteBtn = document.getElementById("reciteBtn");
+  var reciteStatus = document.getElementById("reciteStatus");
+  var useSttApi = document.getElementById("useSttApi");
+  var sttApiConfig = document.getElementById("sttApiConfig");
+  var sttApiUrl = document.getElementById("sttApiUrl");
+  var sttApiKey = document.getElementById("sttApiKey");
+
+  useSttApi.addEventListener("change", function() {
+    sttApiConfig.hidden = !useSttApi.checked;
+  });
+  if (localStorage.getItem("listenEnglish_useSttApi") === "1") {
+    useSttApi.checked = true;
+    sttApiConfig.hidden = false;
+  }
+  if (localStorage.getItem("listenEnglish_sttApiUrl")) sttApiUrl.value = localStorage.getItem("listenEnglish_sttApiUrl");
+  if (localStorage.getItem("listenEnglish_sttApiKey")) sttApiKey.value = localStorage.getItem("listenEnglish_sttApiKey");
+  if (DEFAULT_STT_API_URL && !sttApiUrl.value) sttApiUrl.value = DEFAULT_STT_API_URL;
+  if (DEFAULT_STT_API_KEY && !sttApiKey.value) sttApiKey.value = DEFAULT_STT_API_KEY;
+
+  function setStatus(msg, type) {
+    reciteStatus.textContent = msg;
+    reciteStatus.className = "recite-status" + (type ? " " + type : "");
+  }
+
+  function tokenize(s) {
+    if (!s || !s.trim()) return [];
+    var t = s.toLowerCase().replace(/[\s.,;:!?"'()[\]{}\u2013\u2014\u201C\u201D]+/g, " ").trim();
+    return t.split(/\s+/).filter(Boolean);
+  }
+
+  function tokenizeZh(s) {
+    if (!s || !s.trim()) return [];
+    var out = [];
+    for (var i = 0; i < s.length; i++) {
+      var c = s[i];
+      if (/[\u4e00-\u9fff]/.test(c)) out.push(c);
+      else if (/[a-zA-Z0-9]/.test(c)) {
+        var w = "";
+        while (i < s.length && /[a-zA-Z0-9]/.test(s[i])) { w += s[i]; i++; }
+        i--;
+        if (w) out.push(w.toLowerCase());
+      }
+    }
+    return out;
+  }
+
+  function similarity(ref, said, isZh) {
+    var refTokens = isZh ? tokenizeZh(ref) : tokenize(ref);
+    var saidTokens = isZh ? tokenizeZh(said) : tokenize(said);
+    if (refTokens.length === 0) return saidTokens.length > 0 ? 0 : 1;
+    var saidSet = {};
+    for (var i = 0; i < saidTokens.length; i++) saidSet[saidTokens[i]] = true;
+    var hit = 0;
+    for (var j = 0; j < refTokens.length; j++) {
+      if (saidSet[refTokens[j]]) hit++;
+    }
+    return hit / refTokens.length;
+  }
+
+  function checkAndReveal(recognizedText) {
+    var raw = (recognizedText || "").trim();
+    if (raw.length < 1) return false;
+    var changed = false;
+    var tokensZh = tokenizeZh(raw);
+    var isShort = tokensZh.length <= 2 && raw.length <= 8;
+    if (isShort) {
+      for (var j = 0; j < tokensZh.length; j++) {
+        var t = tokensZh[j];
+        if (allZhTokens.has(t) && !revealedWords.has(t)) {
+          revealedWords.add(t);
+          changed = true;
+        }
+      }
+    } else {
+      for (var idx = 0; idx < cues.length; idx++) {
+        var cue = cues[idx];
+        if (revealedSentences.has(idx)) continue;
+        var scoreZh = cue.zh ? similarity(cue.zh, raw, true) : 0;
+        if (scoreZh >= 0.38) {
+          revealedSentences.add(idx);
+          changed = true;
+        }
+      }
+    }
+    if (changed) {
+      renderCues();
+      playSuccessSound();
+      setStatus("\u5BF9\u4E86\uFF01\u7EE7\u7EED\u8BF4\uFF0C\u8D8A\u591A\u8D8A\u6E05\u6670\uFF01", "success");
+    } else {
+      setStatus("\u8BF7\u8BF4\u6587\u4E2D\u51FA\u73B0\u7684\u8BCD\u6216\u53E5\u5B50\u3002", "fail");
+    }
+    return changed;
+  }
+
+  var recognition = null;
+  var mediaRecorder = null;
+  var recordedChunks = [];
+
+  function initSpeechRecognition() {
+    var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) return null;
+    var r = new SpeechRecognition();
+    r.continuous = false;
+    r.interimResults = false;
+    r.lang = "zh-CN";
+    return r;
+  }
+
+  function startBrowserRecite() {
+    audioEl.pause();
+    recognition = initSpeechRecognition();
+    if (!recognition) {
+      setStatus("\u6D4F\u89C8\u5668\u4E0D\u652F\u6301\u8BED\u97F3\u8BC6\u522B\uFF0C\u8BF7\u5F00\u542F\u201C\u4F7F\u7528\u5916\u90E8\u8BED\u97F3\u8BC6\u522B API\u201D\u5E76\u914D\u7F6E\u3002", "fail");
+      return;
+    }
+    setStatus("\u6B63\u5728\u542C\u2026", "");
+    reciteBtn.classList.add("listening");
+    reciteBtn.disabled = true;
+    recognition.lang = "zh-CN";
+    recognition.onresult = function(event) {
+      var text = (event.results[0] && event.results[0][0]) ? event.results[0][0].transcript : "";
+      reciteBtn.classList.remove("listening");
+      reciteBtn.disabled = false;
+      recognition = null;
+      if (text) checkAndReveal(text);
+      else setStatus("\u672A\u8BC6\u522B\u5230\u8BDD\uFF0C\u8BF7\u518D\u8BD5\u3002", "fail");
+    };
+    recognition.onerror = function() {
+      reciteBtn.classList.remove("listening");
+      reciteBtn.disabled = false;
+      recognition = null;
+      setStatus("\u8BC6\u522B\u51FA\u9519\uFF0C\u8BF7\u518D\u8BD5\u3002", "fail");
+    };
+    recognition.onend = function() {
+      if (recognition) {
+        reciteBtn.classList.remove("listening");
+        reciteBtn.disabled = false;
+        recognition = null;
+      }
+    };
+    recognition.start();
+  }
+
+  function startRecordingForApi() {
+    audioEl.pause();
+    recordedChunks = [];
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream) {
+      mediaRecorder = new MediaRecorder(stream);
+      mediaRecorder.ondataavailable = function(e) { if (e.data.size) recordedChunks.push(e.data); };
+      mediaRecorder.onstop = function() {
+        stream.getTracks().forEach(function(t) { t.stop(); });
+        var blob = new Blob(recordedChunks, { type: "audio/webm" });
+        sendToSttApi(blob);
+      };
+      mediaRecorder.start();
+      setStatus("\u6B63\u5728\u542C\u2026 \u8BF7\u8BF4\u8BDD\uFF0C\u518D\u70B9\u4E00\u6B21\u505C\u6B62\u3002", "");
+      reciteBtn.textContent = "\u505C\u6B62\u5E76\u8BC6\u522B";
+      reciteBtn.classList.add("listening");
+    }).catch(function() {
+      setStatus("\u65E0\u6CD5\u83B7\u53D6\u9EA6\u514B\u98CE\u6743\u9650\u3002", "fail");
+    });
+  }
+
+  function stopRecordingAndSend() {
+    if (!mediaRecorder || mediaRecorder.state !== "recording") return;
+    mediaRecorder.stop();
+    mediaRecorder = null;
+    reciteBtn.textContent = "\u590D\u8FF0";
+    reciteBtn.classList.remove("listening");
+    setStatus("\u8BC6\u522B\u4E2D\u2026", "");
+  }
+
+  function sendToSttApi(blob) {
+    var url = (sttApiUrl.value || "").trim();
+    if (!url) {
+      setStatus("\u8BF7\u586B\u5199\u8BED\u97F3\u8BC6\u522B API \u5730\u5740\u3002", "fail");
+      return;
+    }
+    localStorage.setItem("listenEnglish_useSttApi", useSttApi.checked ? "1" : "0");
+    localStorage.setItem("listenEnglish_sttApiUrl", url);
+    if (sttApiKey.value) localStorage.setItem("listenEnglish_sttApiKey", sttApiKey.value);
+    var form = new FormData();
+    form.append("file", blob, "audio.webm");
+    form.append("model", "whisper-1");
+    var opts = { method: "POST", body: form };
+    var key = (sttApiKey.value || "").trim();
+    if (key) opts.headers = { "Authorization": "Bearer " + key };
+    fetch(url, opts).then(function(r) {
+      return r.text().then(function(raw) {
+        var data = {};
+        try { data = JSON.parse(raw); } catch (e) {}
+        if (!r.ok) {
+          var msg = (data.error && data.error.message) ? data.error.message : ("HTTP " + r.status);
+          throw new Error(msg);
+        }
+        return data;
+      });
+    }).then(function(data) {
+      var text = (data && (data.text !== undefined ? data.text : data.transcript)) || "";
+      if (text && text.trim()) {
+        checkAndReveal(text.trim());
+      } else {
+        setStatus("\u8BC6\u522B\u7ED3\u679C\u4E3A\u7A7A\uFF08\u5F55\u97F3\u77ED\u6216\u683C\u5F0F\u95EE\u9898\uFF09\u3002", "fail");
+      }
+    }).catch(function(err) {
+      var msg = err.message || "";
+      if (msg.indexOf("quota") !== -1 || msg.indexOf("billing") !== -1)
+        msg += " \u2192 \u8BF7\u5230 platform.openai.com \u7684 Billing \u9875\u9762\u5145\u503C\u6216\u68C0\u67E5\u7528\u91CF\u3002";
+      setStatus("\u8BC6\u522B\u5931\u8D25\uFF1A" + msg, "fail");
+    });
+  }
+
+  reciteBtn.addEventListener("click", function() {
+    if (useSttApi.checked) {
+      if (mediaRecorder && mediaRecorder.state === "recording") {
+        stopRecordingAndSend();
+        return;
+      }
+      startRecordingForApi();
+      return;
+    }
+    if (recognition && recognition.state && recognition.state !== "inactive") return;
+    startBrowserRecite();
+  });
+
+  function playSuccessSound() {
+    try {
+      var ctx = new (window.AudioContext || window.webkitAudioContext)();
+      var play = function(freq, start, dur) {
+        var o = ctx.createOscillator();
+        var g = ctx.createGain();
+        o.connect(g);
+        g.connect(ctx.destination);
+        o.frequency.value = freq;
+        o.type = "sine";
+        g.gain.setValueAtTime(0.15, start);
+        g.gain.exponentialRampToValueAtTime(0.01, start + dur);
+        o.start(start);
+        o.stop(start + dur);
+      };
+      play(523.25, 0, 0.08);
+      play(659.25, 0.1, 0.12);
+    } catch (e) {}
+  }
+
+  function showConfetti(el) {
+    var rect = el.getBoundingClientRect();
+    var x = rect.left + rect.width / 2;
+    var y = rect.top + rect.height / 2;
+    var colors = ["#4ade80", "#38bdf8", "#fbbf24", "#f472b6"];
+    for (var i = 0; i < 12; i++) {
+      var d = document.createElement("div");
+      d.className = "confetti-dot";
+      d.style.left = x + (Math.random() - 0.5) * 80 + "px";
+      d.style.top = y + "px";
+      d.style.background = colors[Math.floor(Math.random() * colors.length)];
+      d.style.animationDelay = Math.random() * 0.2 + "s";
+      confettiEl.appendChild(d);
+      setTimeout(function(){ d.remove(); }, 1400);
+    }
+  }
+
+  function wrapWordsWithReveal(text, glossaryKeys, sentenceRevealed) {
+    if (!text) return document.createDocumentFragment();
+    var frag = document.createDocumentFragment();
+    var i = 0;
+    var lower = text.toLowerCase();
+    while (i < text.length) {
+      var found = false;
+      for (var k = 0; k < glossaryKeys.length; k++) {
+        var key = glossaryKeys[k];
+        var keyLen = key.length;
+        if (i + keyLen > text.length) continue;
+        var sub = lower.slice(i, i + keyLen);
+        var origSub = text.slice(i, i + keyLen);
+        var atEnd = i + keyLen >= text.length;
+        var boundaryAfter = atEnd || /[\s.,;:!?"')\]}]/.test(text[i + keyLen]);
+        if (sub === key && boundaryAfter) {
+          var span = document.createElement("span");
+          var rev = sentenceRevealed || revealedWords.has(key);
+          span.className = "word " + (rev ? "word-revealed" : "word-blurred");
+          span.dataset.key = key;
+          span.dataset.word = key;
+          span.textContent = origSub;
+          frag.appendChild(span);
+          i += keyLen;
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        var nextSpace = text.indexOf(" ", i + 1);
+        var end = nextSpace === -1 ? text.length : nextSpace + 1;
+        var word = lower.slice(i, end).replace(/^[\s.,;:!?"']+|[\s.,;:!?"']+$/g, "");
+        var span = document.createElement("span");
+        var rev = sentenceRevealed || (word && revealedWords.has(word));
+        span.className = rev ? "word-revealed" : "word-blurred";
+        if (word) span.dataset.word = word;
+        span.textContent = text.slice(i, end);
+        frag.appendChild(span);
+        i = end;
+      }
+    }
+    return frag;
+  }
+
+  function buildZhSpans(zhText, sentenceRevealed) {
+    if (!zhText) return document.createTextNode("\uFF08\u6682\u65E0\u4E2D\u6587\uFF09");
+    var frag = document.createDocumentFragment();
+    var tokens = tokenizeZh(zhText);
+    var tokenIdx = 0;
+    var i = 0;
+    while (i < zhText.length) {
+      if (tokenIdx < tokens.length && zhText.slice(i, i + tokens[tokenIdx].length) === tokens[tokenIdx]) {
+        var tok = tokens[tokenIdx];
+        var span = document.createElement("span");
+        var rev = sentenceRevealed || revealedWords.has(tok);
+        span.className = rev ? "word-revealed" : "word-blurred";
+        span.dataset.word = tok;
+        span.textContent = tok;
+        frag.appendChild(span);
+        i += tok.length;
+        tokenIdx++;
+      } else {
+        frag.appendChild(document.createTextNode(zhText[i]));
+        i++;
+      }
+    }
+    return frag;
+  }
+
+  function escapeHtml(s) {
+    var div = document.createElement("div");
+    div.textContent = s;
+    return div.innerHTML;
+  }
+
+  function renderCues() {
+    var keys = Object.keys(glossary).sort(function(a, b) { return b.length - a.length; });
+    cuesContainer.innerHTML = "";
+    cues.forEach(function(cue, index) {
+      var row = document.createElement("div");
+      row.className = "cue-row";
+      row.dataset.index = String(index);
+      var sentenceRevealed = revealedSentences.has(index);
+      if (sentenceRevealed) row.classList.add("revealed");
+
+      var timeSpan = document.createElement("span");
+      timeSpan.className = "time";
+      timeSpan.textContent = formatTime(cue.start) + "\u2013" + formatTime(cue.end);
+
+      var lines = document.createElement("div");
+      lines.className = "lines";
+      var block = document.createElement("div");
+      block.className = "sentence-block";
+      var en = document.createElement("div");
+      en.className = "en";
+      en.appendChild(wrapWordsWithReveal(cue.text || "", keys, sentenceRevealed));
+      var zh = document.createElement("div");
+      zh.className = "zh";
+      zh.appendChild(buildZhSpans(cue.zh || "", sentenceRevealed));
+      block.appendChild(en);
+      block.appendChild(zh);
+      lines.appendChild(block);
+
+      var celebrate = document.createElement("span");
+      celebrate.className = "celebrate";
+      celebrate.textContent = "\u2713";
+      celebrate.setAttribute("aria-hidden", "true");
+
+      row.appendChild(timeSpan);
+      row.appendChild(lines);
+      row.appendChild(celebrate);
+      cuesContainer.appendChild(row);
+    });
+
+    cuesContainer.querySelectorAll(".word").forEach(function(el) {
+      el.addEventListener("click", function(e) {
+        e.stopPropagation();
+        var key = el.dataset.key;
+        var entry = glossary[key];
+        if (!entry) return;
+        var tip = document.createElement("div");
+        tip.className = "word-tooltip";
+        tip.innerHTML =
+          "<div class=\"head\">" + escapeHtml(key) + "</div>" +
+          "<div class=\"meaning\">" + escapeHtml(entry.meaning) + "</div>" +
+          (entry.note ? "<div class=\"note\">" + escapeHtml(entry.note) + "</div>" : "");
+        document.body.appendChild(tip);
+        var rect = el.getBoundingClientRect();
+        tip.style.left = Math.min(rect.left, window.innerWidth - tip.offsetWidth - 16) + "px";
+        tip.style.top = (rect.top - tip.offsetHeight - 8) + "px";
+        if (parseInt(tip.style.top, 10) < 8) tip.style.top = rect.bottom + 8 + "px";
+        tip.addEventListener("click", function(ev) { ev.stopPropagation(); });
+        var close = function() {
+          tip.remove();
+          document.removeEventListener("click", close);
+        };
+        requestAnimationFrame(function() { document.addEventListener("click", close); });
+      });
+    });
+  }
+
+  Promise.all([
+    fetch(BASE + "/cues-i18n.json").then(function(r) { return r.ok ? r.json() : null; }).catch(function() { return null; }),
+    fetch(BASE + "/cues.json").then(function(r) { return r.json(); }),
+    fetch(BASE + "/glossary.json").then(function(r) { return r.ok ? r.json() : {}; }).catch(function() { return {}; })
+  ]).then(function(results) {
+    var i18n = results[0];
+    var fallback = results[1];
+    var vocab = results[2];
+    cues = (Array.isArray(i18n) && i18n.length) ? i18n : fallback;
+    if (Array.isArray(cues) && cues.length && !cues[0].zh && Array.isArray(i18n) && i18n.length) cues = i18n;
+    glossary = vocab || {};
+    allEnWords.clear();
+    allZhTokens.clear();
+    cues.forEach(function(cue) {
+      tokenize(cue.text || "").forEach(function(w) { allEnWords.add(w); });
+      tokenizeZh(cue.zh || "").forEach(function(w) { allZhTokens.add(w); });
+    });
+    renderCues();
+  }).catch(function(err) {
+    console.error(err);
+    cuesContainer.innerHTML = "<p>\u52A0\u8F7D\u5B57\u5E55\u6216\u8BCD\u8868\u5931\u8D25\uFF0C\u8BF7\u68C0\u67E5\u6587\u4EF6\u3002</p>";
+  });
+
+  audioEl.addEventListener("timeupdate", function() {
+    if (!cues.length) return;
+    var t = audioEl.currentTime;
+    var idx = null;
+    for (var i = 0; i < cues.length; i++) {
+      var c = cues[i];
+      if (t >= c.start && t < c.end) { idx = i; break; }
+    }
+    if (idx === null || idx === activeIndex) return;
+    activeIndex = idx;
+    var rows = cuesContainer.querySelectorAll(".cue-row");
+    rows.forEach(function(row, i) {
+      if (i === idx) {
+        row.classList.add("active");
+        var containerTop = cuesContainer.getBoundingClientRect().top;
+        var rowTop = row.getBoundingClientRect().top;
+        var offset = rowTop - containerTop - cuesContainer.clientHeight / 2;
+        cuesContainer.scrollTop += offset;
+      } else {
+        row.classList.remove("active");
+      }
+    });
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>英语听力模拟试题 17 · ListenEnglish</title>
+  <style>
+    :root {
+      --bg: #050816;
+      --panel: #0b1220;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 16px;
+      line-height: 1.5;
+    }
+    .container { max-width: 720px; margin: 0 auto; }
+    h1 { font-size: 18px; font-weight: 600; margin-bottom: 8px; color: #fff; }
+    .subtitle { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
+    .player-wrap { margin-bottom: 12px; }
+    .player-wrap audio { width: 100%; border-radius: 8px; display: block; }
+    .player-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 6px;
+    }
+    .player-time { font-size: 12px; color: var(--muted); min-width: 36px; }
+    .player-track {
+      flex: 1;
+      height: 24px;
+      position: relative;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+    }
+    .player-track::before {
+      content: "";
+      position: absolute;
+      left: 0; top: 50%;
+      transform: translateY(-50%);
+      width: 100%; height: 6px;
+      background: #334155;
+      border-radius: 3px;
+    }
+    .player-fill {
+      position: absolute;
+      left: 0; top: 50%;
+      transform: translateY(-50%);
+      height: 6px;
+      width: 0%;
+      background: var(--accent);
+      border-radius: 3px;
+      pointer-events: none;
+    }
+    .player-track:active { cursor: grabbing; }
+    .cues {
+      max-height: 420px;
+      overflow-y: auto;
+      border-radius: 10px;
+      background: var(--panel);
+      padding: 12px 10px;
+      box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.6);
+    }
+    .cues-hint { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+    .cue-row {
+      padding: 10px 10px 12px;
+      border-radius: 8px;
+      margin-bottom: 4px;
+      transition: background 0.2s;
+      border: 1px solid transparent;
+      cursor: pointer;
+    }
+    .cue-row:hover { background: rgba(30, 41, 59, 0.5); }
+    .cue-row.active {
+      background: rgba(30, 41, 59, 0.8);
+      border-color: rgba(56, 189, 248, 0.3);
+    }
+    .time {
+      font-size: 11px;
+      color: var(--muted);
+      margin-right: 10px;
+      white-space: nowrap;
+      vertical-align: top;
+    }
+    .lines { display: inline-block; vertical-align: top; max-width: calc(100% - 52px); }
+    .cue-row .text { font-size: 15px; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>英语听力模拟试题 17</h1>
+  <p class="subtitle">拖动进度条可跳转；点击下方段落从该句开始播放。<span id="audioHint" style="color: var(--muted);"></span></p>
+
+  <div class="player-wrap">
+    <audio id="audio" controls preload="auto"></audio>
+    <div class="player-bar">
+      <span id="timeCurrent" class="player-time">0:00</span>
+      <div class="player-track" id="playerTrack" title="点击或拖动进度条跳转">
+        <div class="player-fill" id="playerFill"></div>
+      </div>
+      <span id="timeTotal" class="player-time">0:00</span>
+    </div>
+  </div>
+
+  <p class="cues-hint">点击任意段落，播放器会跳转到该句并播放</p>
+  <div id="cues" class="cues"></div>
+</div>
+
+<script type="application/json" id="cues-embed">
+[{"start": 11.7, "end": 15.7, "text": "英語聽力模擬視題,17."}, {"start": 15.7, "end": 17.7, "text": "第一節"}, {"start": 17.7, "end": 22.7, "text": "聽下面五段對話,每段對話後有一個小題,"}, {"start": 22.7, "end": 29.7, "text": "從題中所給的ABC三個選項中選出最佳選項,"}, {"start": 29.7, "end": 34.7, "text": "聽完每段對話後,你都有十秒鐘的時間"}, {"start": 34.7, "end": 38.7, "text": "來回答有關小題和閱讀像小題,"}, {"start": 38.7, "end": 40.7, "text": "每段對話都兩遍,"}, {"start": 40.7, "end": 47.7, "text": "現在你有五秒鐘的時間閱讀第一小題的有關內容。"}, {"start": 47.7, "end": 58.51, "text": "I wanted to invite my friend to go fishing,"}, {"start": 58.51, "end": 60.51, "text": "but my phone can't make video calls."}, {"start": 60.51, "end": 62.51, "text": "Is it broken?"}, {"start": 62.51, "end": 63.51, "text": "Can you help me check?"}, {"start": 63.51, "end": 66.51, "text": "Sure, Grandpa, let me see."}, {"start": 66.51, "end": 70.51, "text": "Oh, you just accidentally turned off the internet connection."}, {"start": 70.51, "end": 75.89, "text": "I wanted to invite my friend to go fishing,"}, {"start": 75.89, "end": 78.89, "text": "but my phone can't make video calls."}, {"start": 78.89, "end": 79.89, "text": "Is it broken?"}, {"start": 79.89, "end": 81.89, "text": "Can you help me check?"}, {"start": 81.89, "end": 83.89, "text": "Sure, Grandpa, let me see."}, {"start": 83.89, "end": 88.89, "text": "Oh, you just accidentally turned off the internet connection."}, {"start": 88.89, "end": 103.12, "text": "You're not going to Amy's beach party?"}, {"start": 103.12, "end": 104.12, "text": "You'll regret it."}, {"start": 104.12, "end": 106.12, "text": "I have no choice."}, {"start": 106.12, "end": 109.12, "text": "I have to prepare for the speech competition."}, {"start": 109.12, "end": 114.12, "text": "That competition made you miss the road trip last weekend, too."}, {"start": 114.12, "end": 115.12, "text": "I know."}, {"start": 115.12, "end": 119.12, "text": "I already regret signing up for it."}, {"start": 119.12, "end": 122.12, "text": "You're not going to Amy's beach party?"}, {"start": 122.12, "end": 123.12, "text": "You'll regret it."}, {"start": 123.12, "end": 125.12, "text": "I have no choice."}, {"start": 125.12, "end": 128.12, "text": "I have to prepare for the speech competition."}, {"start": 128.12, "end": 133.12, "text": "That competition made you miss the road trip last weekend, too."}, {"start": 133.12, "end": 134.12, "text": "I know."}, {"start": 134.12, "end": 137.12, "text": "I already regret signing up for it."}, {"start": 137.12, "end": 149.38, "text": "What are you doing?"}, {"start": 149.38, "end": 154.38, "text": "I'm packing because I'm going to New York on business with my boss."}, {"start": 154.38, "end": 157.38, "text": "The flight leaves in four hours."}, {"start": 157.38, "end": 161.38, "text": "Remember to take your coat because there's a drop in temperature."}, {"start": 161.38, "end": 164.63, "text": "What are you doing?"}, {"start": 164.63, "end": 169.63, "text": "I'm packing because I'm going to New York on business with my boss."}, {"start": 169.63, "end": 172.63, "text": "The flight leaves in four hours."}, {"start": 172.63, "end": 176.63, "text": "Remember to take your coat because there's a drop in temperature."}, {"start": 176.63, "end": 191.02, "text": "Hey, could you stop pacing around?"}, {"start": 191.02, "end": 193.02, "text": "You're like a cat on hot bricks."}, {"start": 193.02, "end": 196.02, "text": "I just can't calm down."}, {"start": 196.02, "end": 200.02, "text": "What if I can't make it to the badminton final?"}, {"start": 200.02, "end": 201.02, "text": "Don't worry."}, {"start": 201.02, "end": 204.02, "text": "I have full confidence in your skills."}, {"start": 204.02, "end": 208.3, "text": "But I'm afraid I might let you down."}, {"start": 208.3, "end": 211.3, "text": "Hey, could you stop pacing around?"}, {"start": 211.3, "end": 213.3, "text": "You're like a cat on hot bricks."}, {"start": 213.3, "end": 216.3, "text": "I just can't calm down."}, {"start": 216.3, "end": 219.3, "text": "What if I can't make it to the badminton final?"}, {"start": 219.3, "end": 220.3, "text": "Don't worry."}, {"start": 220.3, "end": 223.3, "text": "I have full confidence in your skills."}, {"start": 223.3, "end": 226.3, "text": "But I'm afraid I might let you down."}, {"start": 226.3, "end": 240.6, "text": "Miss Brown is truly amazing."}, {"start": 240.6, "end": 246.6, "text": "Her research on the effects of diet on fighting cancer has made new breakthroughs."}, {"start": 246.6, "end": 248.6, "text": "Absolutely."}, {"start": 248.6, "end": 254.6, "text": "Scientists like her are constantly pushing back the boundaries of human knowledge."}, {"start": 254.6, "end": 258.6, "text": "We should study hard to become people like her."}, {"start": 258.6, "end": 261.6, "text": "Miss Brown is truly amazing."}, {"start": 261.6, "end": 267.6, "text": "Her research on the effects of diet on fighting cancer has made new breakthroughs."}, {"start": 267.6, "end": 268.6, "text": "Absolutely."}, {"start": 268.6, "end": 274.6, "text": "Scientists like her are constantly pushing back the boundaries of human knowledge."}, {"start": 274.6, "end": 285.35, "text": "We should study hard to become people like her."}, {"start": 285.35, "end": 287.35, "text": "1."}, {"start": 287.35, "end": 290.35, "text": "Second,"}, {"start": 290.35, "end": 293.35, "text": "Everything goes in step by step."}, {"start": 293.35, "end": 296.35, "text": "Every step with a few tricks to change from side step to side"}, {"start": 296.35, "end": 303.35, "text": "In the real world they will pick three at the first touches."}, {"start": 303.35, "end": 306.35, "text": "Every step with a few tricks to change from side to side"}, {"start": 306.35, "end": 310.35, "text": "You will create time for details."}, {"start": 310.35, "end": 311.35, "text": "Every step is five seconds."}, {"start": 311.35, "end": 314.35, "text": "The third step,"}, {"start": 314.35, "end": 317.75, "text": "Yes, keep up the fast,"}, {"start": 317.75, "end": 352.55, "text": "This fish burger is really delicious. I'm going to have it again tomorrow."}, {"start": 352.55, "end": 358.79, "text": "You seem to really like burgers. Do you know what the world's first burger chain was?"}, {"start": 358.79, "end": 362.79, "text": "I guess it must be McDonald's or maybe Burger King?"}, {"start": 362.79, "end": 368.79, "text": "Neither. It was White Castle, founded by Billy Ingram in 1921."}, {"start": 368.79, "end": 372.63, "text": "I've never heard of it before. How did you know about it?"}, {"start": 372.63, "end": 377.75, "text": "I used to work at White Castle. I'm pretty good at making chicken burgers."}, {"start": 377.75, "end": 383.83, "text": "Want to learn? I can write down the necessary materials and steps to make them for you."}, {"start": 383.83, "end": 389.74, "text": "That's great. This fish burger is really delicious."}, {"start": 389.74, "end": 395.26, "text": "I'm going to have it again tomorrow. You seem to really like burgers."}, {"start": 395.26, "end": 398.78, "text": "Do you know what the world's first burger chain was?"}, {"start": 398.78, "end": 402.78, "text": "I guess it must be McDonald's or maybe Burger King?"}, {"start": 402.78, "end": 408.78, "text": "Neither. It was White Castle, founded by Billy Ingram in 1921."}, {"start": 408.78, "end": 412.62, "text": "I've never heard of it before. How did you know about it?"}, {"start": 412.62, "end": 417.74, "text": "I used to work at White Castle. I'm pretty good at making chicken burgers."}, {"start": 417.74, "end": 423.74, "text": "Want to learn? I can write down the necessary materials and steps to make them for you."}, {"start": 423.74, "end": 441.1, "text": "That's great."}, {"start": 441.1, "end": 466.94, "text": "I'm thinking about getting a pet. Do you have one?"}, {"start": 466.94, "end": 471.98, "text": "Yes. A rabbit and two cats. What kind of pet would you like?"}, {"start": 471.98, "end": 476.94, "text": "My landlord won't allow me to have a dog, so maybe I'll have a cat."}, {"start": 476.94, "end": 480.14, "text": "Did you get your cats online or from a friend?"}, {"start": 480.14, "end": 484.78, "text": "I bought all of my pets from a pet shop near my neighborhood."}, {"start": 484.78, "end": 487.02, "text": "That must have cost you a lot."}, {"start": 487.02, "end": 491.74, "text": "Yes. You can go to the local animal shelter to have a look."}, {"start": 491.74, "end": 496.62, "text": "Good idea. But my cousin is staying with me in my apartment this week,"}, {"start": 496.62, "end": 499.18, "text": "and she's allergic to animal hair."}, {"start": 499.18, "end": 503.26, "text": "So I might have to postpone the plan until the following week."}, {"start": 503.26, "end": 507.5, "text": "Okay. If you have any more questions, feel free to call me."}, {"start": 509.59, "end": 513.19, "text": "I'm thinking about getting a pet. Do you have one?"}, {"start": 513.19, "end": 518.39, "text": "Yes. A rabbit and two cats. What kind of pet would you like?"}, {"start": 518.39, "end": 523.27, "text": "My landlord won't allow me to have a dog, so maybe I'll have a cat."}, {"start": 523.27, "end": 526.55, "text": "Did you get your cats online or from a friend?"}, {"start": 526.55, "end": 531.11, "text": "I bought all of my pets from a pet shop near my neighborhood."}, {"start": 531.11, "end": 533.43, "text": "That must have cost you a lot."}, {"start": 533.43, "end": 538.07, "text": "Yes. You can go to the local animal shelter to have a look."}, {"start": 538.07, "end": 542.87, "text": "Good idea. But my cousin is staying with me in my apartment this week,"}, {"start": 542.87, "end": 545.43, "text": "and she's allergic to animal hair."}, {"start": 545.43, "end": 549.51, "text": "So I might have to postpone the plan until the following week."}, {"start": 549.51, "end": 553.75, "text": "Okay. If you have any more questions, feel free to call me."}, {"start": 573.38, "end": 602.52, "text": "It's said that this year's Odd Sox Day falls on November 13th."}, {"start": 602.52, "end": 605.96, "text": "Odd Sox Day? What's it about, Amy?"}, {"start": 605.96, "end": 609.8, "text": "Basically, participants wear mismatched socks to schools,"}, {"start": 609.8, "end": 615.24, "text": "workplaces, or at home to stand against prejudice and accept differences."}, {"start": 615.24, "end": 621.24, "text": "I participated in Odd Sox Day 2024, which was on November 12th."}, {"start": 621.24, "end": 626.44, "text": "That sounds meaningful. So you wore mismatched socks to school that day?"}, {"start": 626.44, "end": 633.4, "text": "Yeah. I wore a blue knee-high sock on my left foot and a yellow ankle sock on my right."}, {"start": 633.4, "end": 639.72, "text": "Sounds cool. Besides wearing Odd Sox, what else can participants do?"}, {"start": 639.88, "end": 644.2, "text": "They can post photos of their mismatched socks on social media,"}, {"start": 644.2, "end": 647.96, "text": "or donate money to the official website of this event."}, {"start": 647.96, "end": 652.68, "text": "I donated all my pocket money, five pounds to support the cause."}, {"start": 652.68, "end": 657.4, "text": "Can I celebrate Odd Sox Day with you on November 13th?"}, {"start": 657.4, "end": 663.0, "text": "Sure, but this date is not the one officially announced on the official website."}, {"start": 663.0, "end": 665.96, "text": "I'll let you know when the exact date is announced."}, {"start": 668.1, "end": 673.14, "text": "It's said that this year's Odd Sox Day falls on November 13th."}, {"start": 673.14, "end": 676.58, "text": "Odd Sox Day? What's it about, Amy?"}, {"start": 676.58, "end": 682.34, "text": "Basically, participants wear mismatched socks to schools, workplaces, or at home"}, {"start": 682.34, "end": 685.86, "text": "to stand against prejudice and accept differences."}, {"start": 685.86, "end": 691.86, "text": "I participated in Odd Sox Day 2024, which was on November 12th."}, {"start": 691.86, "end": 697.06, "text": "That sounds meaningful. So you wore mismatched socks to school that day?"}, {"start": 697.06, "end": 700.82, "text": "Yeah, I wore a blue knee-high sock on my left foot"}, {"start": 700.82, "end": 703.78, "text": "and a yellow ankle sock on my right."}, {"start": 703.78, "end": 710.26, "text": "Sounds cool. Besides wearing Odd Sox, what else can participants do?"}, {"start": 710.26, "end": 714.66, "text": "They can post photos of their mismatched socks on social media,"}, {"start": 714.66, "end": 718.42, "text": "or donate money to the official website of this event."}, {"start": 718.42, "end": 723.14, "text": "I donated all my pocket money, five pounds to support the cause."}, {"start": 723.22, "end": 727.22, "text": "Can I celebrate Odd Sox Day with you on November 13th?"}, {"start": 727.94, "end": 733.54, "text": "Sure, but this date is not the one officially announced on the official website."}, {"start": 733.54, "end": 736.5, "text": "I'll let you know when the exact date is announced."}, {"start": 780.22, "end": 784.54, "text": "Can you recommend some TV dramas that are suitable for teenagers?"}, {"start": 784.62, "end": 788.14, "text": "Sure, first, there's the Baby Sitters Club."}, {"start": 788.14, "end": 793.1, "text": "The show is based on the popular series of books by Anne M. Martin."}, {"start": 793.1, "end": 797.02, "text": "It's about a group of friends who start a babysitting business."}, {"start": 797.02, "end": 801.58, "text": "However, each girl faces her own personal challenges."}, {"start": 801.58, "end": 805.02, "text": "I'm not really into that kind of theme."}, {"start": 805.02, "end": 808.14, "text": "Is there anything with a more unique plot?"}, {"start": 808.14, "end": 811.34, "text": "Absolutely. Try Hannah Montana."}, {"start": 811.34, "end": 815.5, "text": "The main character, Miley Stewart, needs a double life."}, {"start": 815.5, "end": 819.1, "text": "To most people, she's just a normal teenager,"}, {"start": 819.1, "end": 822.7, "text": "but her closest family and friends know her secret."}, {"start": 822.7, "end": 824.86, "text": "She's also a famous pop singer."}, {"start": 825.66, "end": 828.62, "text": "Sounds interesting. I'll watch it."}, {"start": 828.62, "end": 833.1, "text": "I also recommend another show called Keenan and Kel."}, {"start": 833.1, "end": 838.38, "text": "It first aired in August 1996 and concluded in May 2000."}, {"start": 838.94, "end": 844.94, "text": "Oh, I've seen this drama before, but I didn't finish it because it felt a bit outdated."}, {"start": 847.03, "end": 851.11, "text": "Can you recommend some TV dramas that are suitable for teenagers?"}, {"start": 851.11, "end": 854.87, "text": "Sure, first, there's the Baby Sitters Club."}, {"start": 854.87, "end": 859.83, "text": "The show is based on the popular series of books by Anne M. Martin."}, {"start": 859.83, "end": 863.83, "text": "It's about a group of friends who start a babysitting business."}, {"start": 863.83, "end": 868.39, "text": "However, each girl faces her own personal challenges."}, {"start": 868.47, "end": 871.83, "text": "I'm not really into that kind of theme."}, {"start": 871.83, "end": 874.95, "text": "Is there anything with a more unique plot?"}, {"start": 874.95, "end": 878.15, "text": "Absolutely. Try Hannah Montana."}, {"start": 878.15, "end": 882.31, "text": "The main character, Miley Stewart, needs a double life."}, {"start": 882.31, "end": 885.91, "text": "To most people, she's just a normal teenager,"}, {"start": 885.91, "end": 889.51, "text": "but her closest family and friends know her secret."}, {"start": 889.51, "end": 892.39, "text": "She's also a famous pop singer."}, {"start": 892.39, "end": 895.43, "text": "Sounds interesting. I'll watch it."}, {"start": 895.51, "end": 899.99, "text": "I also recommend another show called Keenan and Kel."}, {"start": 899.99, "end": 905.83, "text": "It first aired in August 1996 and concluded in May 2000."}, {"start": 905.83, "end": 911.75, "text": "Oh, I've seen this drama before, but I didn't finish it because it felt a bit outdated."}, {"start": 912.23, "end": 965.34, "text": "In 2018, Miley's husband Marlon died in a skiing accident."}, {"start": 965.34, "end": 969.26, "text": "His sudden death turned Miley's world upside down."}, {"start": 969.26, "end": 974.06, "text": "When Carla, one of Miley's closest friends, heard the awful news,"}, {"start": 974.06, "end": 977.34, "text": "she knew right away that she wanted to help."}, {"start": 977.42, "end": 982.54, "text": "Carla and Miley met 10 years ago at a parent-teacher conference."}, {"start": 982.54, "end": 985.58, "text": "Carla's son and Miley's daughter were classmates."}, {"start": 986.22, "end": 988.38, "text": "They had a lot in common."}, {"start": 988.38, "end": 992.94, "text": "They both volunteered in the community and loved cooking and hiking."}, {"start": 993.5, "end": 998.06, "text": "Carla knew Miley already had crucial daily support from her sister,"}, {"start": 998.06, "end": 1001.02, "text": "Kathy O'Brien, who had come to stay with her."}, {"start": 1001.5, "end": 1004.06, "text": "But she wanted to do more for Miley."}, {"start": 1004.62, "end": 1010.06, "text": "She created a rolling calendar where 31 women, the calendar girls,"}, {"start": 1010.06, "end": 1014.78, "text": "would each do a small thing for Miley every month on a specific day."}, {"start": 1015.34, "end": 1019.5, "text": "Carla made sure to note which dates might be especially hard."}, {"start": 1020.06, "end": 1026.94, "text": "Miley's birthday in April, the couple's anniversary in July and Marlon's birthday in August."}, {"start": 1027.5, "end": 1032.54, "text": "Throughout the year, Miley's calendar girls supported her in various ways."}, {"start": 1033.18, "end": 1038.3, "text": "Nicole, who lived three houses away, brought delicious hot meals,"}, {"start": 1038.3, "end": 1040.78, "text": "along with flowers and a card."}, {"start": 1040.78, "end": 1045.9, "text": "Tony, who also lived in the neighborhood, would often meet Miley for a walk."}, {"start": 1046.54, "end": 1050.46, "text": "When Miley looks back on the year after Marlon died,"}, {"start": 1050.46, "end": 1053.9, "text": "it is with both deep sadness and deep gratitude."}, {"start": 1054.46, "end": 1057.98, "text": "I hadn't had any really huge losses before,"}, {"start": 1057.98, "end": 1062.22, "text": "so I don't think I knew the value of having that much support."}, {"start": 1062.62, "end": 1063.5, "text": "She reflects."}, {"start": 1065.66, "end": 1070.86, "text": "In 2018, Miley's husband Marlon died in a skiing accident."}, {"start": 1071.42, "end": 1074.7, "text": "His sudden death turned Miley's world upside down."}, {"start": 1075.26, "end": 1080.06, "text": "When Carla, one of Miley's closest friends, heard the awful news,"}, {"start": 1080.06, "end": 1082.78, "text": "she knew right away that she wanted to help."}, {"start": 1083.34, "end": 1088.46, "text": "Carla and Miley met 10 years ago at a parent-teacher conference."}, {"start": 1088.46, "end": 1091.58, "text": "Carla's son and Miley's daughter were classmates."}, {"start": 1092.14, "end": 1093.74, "text": "They had a lot in common."}, {"start": 1094.3, "end": 1098.86, "text": "They both volunteered in the community and loved cooking and hiking."}, {"start": 1099.42, "end": 1103.98, "text": "Carla knew Miley already had crucial daily support from her sister,"}, {"start": 1103.98, "end": 1106.94, "text": "Kathy O'Brien, who had come to stay with her."}, {"start": 1107.42, "end": 1109.98, "text": "But she wanted to do more for Miley."}, {"start": 1110.54, "end": 1115.98, "text": "She created a rolling calendar where 31 women, the calendar girls,"}, {"start": 1115.98, "end": 1120.7, "text": "would each do a small thing for Miley every month on a specific day."}, {"start": 1121.26, "end": 1125.66, "text": "Carla made sure to note which dates might be especially hard."}, {"start": 1125.98, "end": 1130.62, "text": "Miley's birthday in April, a couple's anniversary in July,"}, {"start": 1130.62, "end": 1132.86, "text": "and Marlon's birthday in August."}, {"start": 1133.42, "end": 1138.46, "text": "Throughout the year, Miley's calendar girls supported her in various ways."}, {"start": 1139.02, "end": 1144.22, "text": "Nicole, who lived three houses away, brought delicious hot meals,"}, {"start": 1144.22, "end": 1146.14, "text": "along with flowers and a card."}, {"start": 1146.7, "end": 1151.82, "text": "Tony, who also lived in the neighborhood, would often meet Miley for a walk."}, {"start": 1152.46, "end": 1156.38, "text": "When Miley looks back on the year after Marlon died,"}, {"start": 1156.38, "end": 1159.82, "text": "it is with both deep sadness and deep gratitude."}, {"start": 1160.38, "end": 1163.9, "text": "I hadn't had any really huge losses before,"}, {"start": 1163.9, "end": 1168.54, "text": "so I don't think I knew the value of having that much support."}, {"start": 1168.54, "end": 1169.42, "text": "She reflects."}]
+</script>
+
+<script>
+  var audioEl = document.getElementById("audio");
+  var playerTrack = document.getElementById("playerTrack");
+  var playerFill = document.getElementById("playerFill");
+  var timeCurrent = document.getElementById("timeCurrent");
+  var timeTotal = document.getElementById("timeTotal");
+  var cuesContainer = document.getElementById("cues");
+
+  var baseUrl = (function() {
+    var href = document.location.href;
+    var i = href.lastIndexOf("/");
+    return i >= 0 ? href.substring(0, i + 1) : "";
+  })();
+  audioEl.src = baseUrl + "audio.mp3";
+  audioEl.load();
+  var audioHint = document.getElementById("audioHint");
+  audioEl.addEventListener("error", function() {
+    if (audioHint) audioHint.innerHTML = " · 未检测到 <strong>audio.mp3</strong>，请将音频放在本页同目录下，或运行：<code>python tools\\fetch_listening_from_url.py --url \"二维码链接\" --out-dir content\\mock17</code>";
+  });
+  audioEl.addEventListener("canplaythrough", function() {
+    if (audioHint) audioHint.textContent = "";
+  });
+
+  function formatTime(sec) {
+    var s = Math.floor(sec);
+    var m = Math.floor(s / 60);
+    var r = s % 60;
+    return m.toString().padStart(2, "0") + ":" + r.toString().padStart(2, "0");
+  }
+
+  function pctFromEvent(e) {
+    if (!playerTrack) return 0;
+    var rect = playerTrack.getBoundingClientRect();
+    var x = (e && (e.clientX != null)) ? e.clientX : (e && e.touches && e.touches[0] ? e.touches[0].clientX : rect.left);
+    var pct = ((x - rect.left) / rect.width) * 100;
+    return Math.max(0, Math.min(100, pct));
+  }
+  function seekToPercent(pct) {
+    pct = Math.max(0, Math.min(100, pct));
+    var d = audioEl.duration;
+    if (d && isFinite(d)) {
+      audioEl.currentTime = (pct / 100) * d;
+      return;
+    }
+    var once = function() {
+      audioEl.removeEventListener("loadedmetadata", once);
+      updateDuration();
+      seekToPercent(pct);
+    };
+    audioEl.addEventListener("loadedmetadata", once);
+    audioEl.load();
+  }
+  function updateDuration() {
+    var d = audioEl.duration;
+    if (d && isFinite(d)) timeTotal.textContent = formatTime(d);
+  }
+  audioEl.addEventListener("loadedmetadata", updateDuration);
+  audioEl.addEventListener("durationchange", updateDuration);
+  audioEl.addEventListener("timeupdate", function() {
+    var t = audioEl.currentTime;
+    var d = audioEl.duration;
+    var pct = (d && isFinite(d)) ? (t / d) * 100 : 0;
+    if (playerFill) playerFill.style.width = pct + "%";
+    timeCurrent.textContent = formatTime(t);
+    updateActiveCue(t);
+  });
+
+  var trackDragging = false;
+  if (playerTrack) {
+    playerTrack.addEventListener("mousedown", function(e) {
+      e.preventDefault();
+      trackDragging = true;
+      seekToPercent(pctFromEvent(e));
+    });
+  }
+  document.addEventListener("mousemove", function(e) {
+    if (!trackDragging || !playerTrack) return;
+    seekToPercent(pctFromEvent(e));
+  });
+  document.addEventListener("mouseup", function() { trackDragging = false; });
+  document.addEventListener("mouseleave", function() { trackDragging = false; });
+  if (playerTrack) {
+    playerTrack.addEventListener("touchstart", function(e) {
+      trackDragging = true;
+      seekToPercent(pctFromEvent(e));
+    }, { passive: true });
+    playerTrack.addEventListener("touchmove", function(e) {
+      if (trackDragging) seekToPercent(pctFromEvent(e));
+    }, { passive: true });
+    playerTrack.addEventListener("touchend", function() { trackDragging = false; });
+  }
+
+  function seekToTime(t) {
+    t = Number(t);
+    if (!isFinite(t) || t < 0) return;
+    audioEl.pause();
+    var doSeek = function() {
+      var d = audioEl.duration;
+      if (d && isFinite(d)) t = Math.min(t, d - 0.1);
+      audioEl.currentTime = t;
+      audioEl.play();
+    };
+    var d = audioEl.duration;
+    if (d && isFinite(d)) {
+      setTimeout(doSeek, 0);
+      return;
+    }
+    var once = function() {
+      audioEl.removeEventListener("loadedmetadata", once);
+      setTimeout(doSeek, 0);
+    };
+    audioEl.addEventListener("loadedmetadata", once);
+    if (audioEl.readyState < 1) audioEl.load();
+  }
+
+  var cues = [];
+  var activeIndex = null;
+
+  function updateActiveCue(t) {
+    if (!cues.length) return;
+    var idx = null;
+    for (var i = 0; i < cues.length; i++) {
+      var c = cues[i];
+      if (t >= c.start && t < c.end) { idx = i; break; }
+    }
+    if (idx === null || idx === activeIndex) return;
+    activeIndex = idx;
+    var rows = cuesContainer.querySelectorAll(".cue-row");
+    rows.forEach(function(row, i) {
+      if (i === idx) {
+        row.classList.add("active");
+        var containerTop = cuesContainer.getBoundingClientRect().top;
+        var rowTop = row.getBoundingClientRect().top;
+        var offset = rowTop - containerTop - cuesContainer.clientHeight / 2;
+        cuesContainer.scrollTop += offset;
+      } else {
+        row.classList.remove("active");
+      }
+    });
+  }
+
+  cuesContainer.addEventListener("click", function(e) {
+    var row = e.target.closest(".cue-row");
+    if (!row) return;
+    e.preventDefault();
+    e.stopPropagation();
+    var idx = parseInt(row.getAttribute("data-index"), 10);
+    if (isNaN(idx) || !cues[idx]) return;
+    var startSec = Number(cues[idx].start);
+    if (!isFinite(startSec)) return;
+    seekToTime(Math.max(0, startSec - 0.2));
+  });
+
+
+  function renderCues() {
+    cuesContainer.innerHTML = "";
+    cues.forEach(function(cue, index) {
+      var row = document.createElement("div");
+      row.className = "cue-row";
+      row.setAttribute("data-index", String(index));
+      var timeSpan = document.createElement("span");
+      timeSpan.className = "time";
+      timeSpan.textContent = formatTime(cue.start) + "–" + formatTime(cue.end);
+      var lines = document.createElement("div");
+      lines.className = "lines";
+      var textEl = document.createElement("div");
+      textEl.className = "text";
+      textEl.textContent = cue.text || "";
+      lines.appendChild(textEl);
+      row.appendChild(timeSpan);
+      row.appendChild(lines);
+      cuesContainer.appendChild(row);
+    });
+  }
+  var embedEl = document.getElementById("cues-embed");
+  if (embedEl) try { cues = JSON.parse(embedEl.textContent); } catch(e) {}
+  if (Array.isArray(cues) && cues.length > 0) {
+    renderCues();
+  } else {
+    cuesContainer.innerHTML = "<p style='color: var(--muted);'>无字幕数据。</p>";
+  }
+</script>
+</body>
+</html>

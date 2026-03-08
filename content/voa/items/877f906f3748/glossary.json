@@ -1,0 +1,62 @@
+{
+  "renewal": {
+    "meaning": "更新；复苏；复兴",
+    "note": "春天常与 renewal 连用，表示万物复苏、重新开始。"
+  },
+  "growth": {
+    "meaning": "生长；增长；发展",
+    "note": "既可指植物的生长，也可指经济、个人的成长。"
+  },
+  "buds": {
+    "meaning": "芽；花蕾；叶芽",
+    "note": "植物枝干上刚长出的嫩芽，常与 shoots（新枝）一起出现。"
+  },
+  "shoots": {
+    "meaning": "新枝；嫩芽；抽条",
+    "note": "从种子或靠近地面长出的新茎叶。"
+  },
+  "bloom": {
+    "meaning": "开花；绽放",
+    "note": "动词，强调花朵打开、盛开的过程。"
+  },
+  "noticeable": {
+    "meaning": "明显的；引人注目的",
+    "note": "notice + -able，容易被注意到的。"
+  },
+  "boring": {
+    "meaning": "无聊的；乏味的",
+    "note": "形容事物没有趣味、让人提不起兴趣。"
+  },
+  "tedious": {
+    "meaning": "枯燥的；冗长乏味的",
+    "note": "比 boring 更强调时间长、重复、令人厌烦。"
+  },
+  "expression": {
+    "meaning": "说法；习语；表达",
+    "note": "这里指固定搭配的短语，如「like watching grass grow」。"
+  },
+  "uninteresting": {
+    "meaning": "无趣的；没意思的",
+    "note": "un- 表否定，与 interesting 相对。"
+  },
+  "on-the-go": {
+    "meaning": "忙个不停的；总在奔波的",
+    "note": "形容人精力充沛、总在行动，停不下来。"
+  },
+  "beneath": {
+    "meaning": "在……下面",
+    "note": "与 under 意思相近，多用于书面或习语中，如 beneath one's feet。"
+  },
+  "campaign": {
+    "meaning": "竞选；运动；战役",
+    "note": "文中指政治竞选活动。"
+  },
+  "acceptance speech": {
+    "meaning": "胜选演说；就职演说",
+    "note": "竞选获胜后发表的演讲。"
+  },
+  "non-stop": {
+    "meaning": "不停的；不间断的",
+    "note": "形容持续进行、没有停歇。"
+  }
+}

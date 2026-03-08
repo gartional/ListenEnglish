@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>英语听力 · 模拟试题</title>
+  <style>
+    :root {
+      --bg: #050816;
+      --panel: #0b1220;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 24px 16px;
+      line-height: 1.6;
+    }
+    .container { max-width: 480px; margin: 0 auto; }
+    h1 { font-size: 20px; font-weight: 600; margin-bottom: 8px; color: #fff; }
+    p.sub { font-size: 14px; color: var(--muted); margin-bottom: 24px; }
+    .nav-list { display: flex; flex-direction: column; gap: 12px; }
+    .nav-list a {
+      display: block;
+      padding: 16px 20px;
+      background: var(--panel);
+      border-radius: 10px;
+      color: var(--text);
+      text-decoration: none;
+      font-size: 16px;
+      font-weight: 500;
+      border: 1px solid rgba(15, 23, 42, 0.6);
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .nav-list a:hover {
+      background: rgba(30, 41, 59, 0.6);
+      border-color: rgba(56, 189, 248, 0.3);
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>英语听力 · 模拟试题</h1>
+  <p class="sub">选择试题进入逐句复述练习</p>
+  <nav class="nav-list">
+    <a href="mock17-practice.html">模拟试题 17</a>
+    <a href="mock30-practice.html">模拟试题 30</a>
+  </nav>
+</div>
+</body>
+</html>

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ListenEnglish App</title>
+  <style>
+    :root {
+      --bg: #050816;
+      --panel: #0b1220;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 24px;
+      line-height: 1.6;
+    }
+    .container { max-width: 640px; margin: 0 auto; }
+    h1 { font-size: 20px; font-weight: 600; margin-bottom: 8px; }
+    p { color: var(--muted); font-size: 14px; margin-bottom: 16px; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .links { margin-top: 24px; }
+    .links a { display: inline-block; margin-right: 16px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>ListenEnglish · App</h1>
+    <p>子项目入口。内容来自主项目 <code>content/voa/</code>，可与根目录的听力练习页配合使用。</p>
+    <div class="links">
+      <a href="../voa-practice.html">根目录 · 听力练习</a>
+      <a href="../mock17-practice.html">模拟试题 17 · 听力+原文</a>
+    </div>
+  </div>
+</body>
+</html>
