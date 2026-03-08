@@ -101,7 +101,7 @@
     </div>
   </div>
 
-  <p class="cues-hint">点击句子可跳转播放；当前句高亮。每句：复述 = 说本句/词，继续 = 播下一句。</p>
+  <p class="cues-hint">点击句子可跳转播放；当前句高亮。每句：复述 = 说本句/词，继续 = 播下一句。<strong>复述</strong>：勾选「使用外部语音识别 API」并填写 OpenAI Key，或使用 Chrome 并允许麦克风。</p>
   <div id="cues" class="cues"></div>
 </div>
 
@@ -466,6 +466,11 @@
     }
     recitingForIndex = idx;
     if (useSttApi.checked) {
+      if (!(sttApiKey.value || "").trim()) {
+        setStatus("请先填写 API Key（上方「使用外部语音识别 API」展开后填写），保存后再点「复述」。", "fail");
+        recitingForIndex = null;
+        return;
+      }
       startRecordingForApi();
       return;
     }
@@ -496,10 +501,11 @@
       else setStatus("未识别到话，请再试。", "fail");
       recitingForIndex = null;
     };
-    recognition.onerror = function() {
+    recognition.onerror = function(e) {
       recognition = null;
       cuesContainer.querySelectorAll(".btn-recite").forEach(function(b) { b.classList.remove("listening"); });
-      setStatus("识别出错，请再试。", "fail");
+      var msg = (e && e.error === "not-allowed") ? "请允许麦克风权限（地址栏左侧或弹窗），或勾选「使用外部语音识别 API」并填写 Key。" : "浏览器语音识别不可用，请用 Chrome 或勾选「使用外部语音识别 API」并填写 OpenAI Key。";
+      setStatus(msg, "fail");
       recitingForIndex = null;
     };
     recognition.onend = function() {
