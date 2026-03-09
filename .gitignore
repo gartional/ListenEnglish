@@ -14,6 +14,6 @@ venv/
 *.log
 Thumbs.db
 
-# 可选：若音频很大可忽略，需要时再取消注释
-# content/mock17/audio.mp3
-# content/mock30/audio.mp3
+# 音频不推 GitCode（体积大易断线），仅保留字幕/分段
+content/mock*/audio.mp3
+content/mock*/audio.m4a

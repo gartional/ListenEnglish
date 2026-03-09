@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>英语听力模拟试题 · 逐句复述</title>
+  <style>
+    :root {
+      --bg: #050816;
+      --panel: #0b1220;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --success: #4ade80;
+      --blur: 8px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 16px;
+      line-height: 1.5;
+    }
+    .container { max-width: 720px; margin: 0 auto; }
+    h1 { font-size: 18px; font-weight: 600; margin-bottom: 8px; color: #fff; }
+    .nav-back { margin-bottom: 8px; }
+.subtitle { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
+    .player-wrap { margin-bottom: 12px; }
+    .player-wrap audio { width: 100%; border-radius: 8px; display: block; }
+    .player-bar { display: flex; align-items: center; gap: 10px; margin-top: 6px; }
+    .player-time { font-size: 12px; color: var(--muted); min-width: 36px; }
+    .player-track { flex: 1; height: 24px; position: relative; cursor: pointer; display: flex; align-items: center; }
+    .player-track::before { content: ""; position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 100%; height: 6px; background: #334155; border-radius: 3px; }
+    .player-fill { position: absolute; left: 0; top: 50%; transform: translateY(-50%); height: 6px; width: 0%; background: var(--accent); border-radius: 3px; pointer-events: none; }
+    .player-track:active { cursor: grabbing; }
+    .recite-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .recite-api-toggle { font-size: 12px; color: var(--muted); cursor: pointer; }
+    .recite-api-toggle input { margin-right: 4px; }
+    .stt-api-config { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+    .stt-api-config input { padding: 8px 10px; border-radius: 6px; border: 1px solid #334155; background: var(--panel); color: var(--text); font-size: 13px; }
+    .api-key-row { display: flex; align-items: center; gap: 8px; }
+    .api-key-row input { flex: 1; }
+    .recite-status { font-size: 13px; color: var(--muted); min-height: 20px; }
+    .recite-status.success { color: var(--success); }
+    .recite-status.fail { color: #f87171; }
+    .cues { border-radius: 10px; background: var(--panel); padding: 12px 10px; box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.6); }
+    .cues-hint { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+    .cue-row { padding: 10px 10px 12px; border-radius: 8px; margin-bottom: 4px; transition: background 0.2s; border: 1px solid transparent; }
+    .cue-row:hover { background: rgba(30, 41, 59, 0.5); }
+    .cue-row.active { background: rgba(30, 41, 59, 0.8); border-color: rgba(56, 189, 248, 0.3); }
+    .cue-row.revealed .sentence-block { filter: none; opacity: 1; }
+    .time { font-size: 11px; color: var(--muted); margin-right: 10px; white-space: nowrap; vertical-align: top; }
+    .lines { display: inline-block; vertical-align: top; max-width: calc(100% - 52px); }
+    .sentence-block { font-size: 15px; margin-bottom: 8px; }
+    .zh-line { font-size: 14px; color: var(--muted); margin-top: 4px; transition: filter 0.3s, opacity 0.3s; }
+    .zh-line.zh-blurred { filter: blur(var(--blur)); opacity: 0.65; user-select: none; pointer-events: none; }
+    .cue-row.revealed .zh-line.zh-blurred { filter: none; opacity: 1; pointer-events: auto; }
+    .word-blurred { filter: blur(var(--blur)); opacity: 0.65; user-select: none; pointer-events: none; transition: filter 0.3s, opacity 0.3s; }
+    .word-revealed { filter: none; opacity: 1; }
+    .cue-row.revealed .word-blurred { filter: none; opacity: 1; pointer-events: auto; }
+    .row-actions { display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+    .btn-recite, .btn-continue { padding: 6px 14px; font-size: 13px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; }
+    .btn-recite { background: var(--accent); color: #0f172a; }
+    .btn-recite:hover { opacity: 0.9; }
+    .btn-recite.listening { background: #f59e0b; animation: pulse 1s ease-in-out infinite; }
+    @keyframes pulse { 50% { opacity: 0.85; } }
+    .btn-continue { background: #334155; color: var(--text); }
+    .btn-continue:hover { background: #475569; }
+    .btn-original { background: #1e293b; color: var(--muted); padding: 6px 12px; font-size: 13px; border: none; border-radius: 6px; cursor: pointer; }
+    .btn-original:hover { color: var(--text); background: #334155; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <p class="nav-back"><a href="index.html" style="color:var(--muted);font-size:13px;text-decoration:none;">← 试题列表</a></p>
+  <h1 id="pageTitle">英语听力模拟试题 · 逐句复述</h1>
+  <p class="subtitle">当前播放的句子即待复述句。复述（中/英均可）：说对整句显示整句，说对词或短语则显示该词/短语。每句后点「复述」或「继续」。</p>
+
+  <div class="player-wrap">
+    <audio id="audio" controls preload="auto"></audio>
+    <div class="player-bar">
+      <span id="timeCurrent" class="player-time">0:00</span>
+      <div class="player-track" id="playerTrack" title="点击或拖动进度条跳转"><div class="player-fill" id="playerFill"></div></div>
+      <span id="timeTotal" class="player-time">0:00</span>
+    </div>
+  </div>
+
+  <div class="recite-bar">
+    <span id="reciteStatus" class="recite-status" aria-live="polite"></span>
+    <label class="recite-api-toggle">
+      <input type="checkbox" id="useSttApi" /> 使用外部语音识别 API
+    </label>
+  </div>
+  <div id="sttApiConfig" class="stt-api-config" hidden>
+    <input type="text" id="sttApiUrl" placeholder="API 地址（如 OpenAI Whisper）" />
+    <div class="api-key-row">
+      <input type="password" id="sttApiKey" placeholder="API Key" />
+      <a id="apiKeyHelp" href="https://platform.openai.com/api-keys" target="_blank" rel="noopener" style="font-size:13px;color:var(--accent);">获取 Key</a>
+    </div>
+  </div>
+
+  <p class="cues-hint">点击句子可跳转播放；当前句高亮。每句：复述 = 说本句/词，继续 = 播下一句。<strong>复述</strong>：勾选「使用外部语音识别 API」并填写 OpenAI Key，或使用 Chrome 并允许麦克风。</p>
+  <div id="cues" class="cues"></div>
+</div>
+
+<script>
+  (function() {
+    var m = /mock=(\d+)/.exec(location.search);
+    var n = m ? parseInt(m[1], 10) : 1;
+    if (n < 1 || n > 48) n = 1;
+    window.MOCK_N = n;
+    window.MOCK_ID = n <= 9 ? "0" + n : "" + n;
+    window.BASE = "content/mock" + MOCK_ID;
+    window.LS_PREFIX = "listenEnglish_mock" + MOCK_ID + "_";
+  })();
+  var BASE = window.BASE;
+  var LS_PREFIX = window.LS_PREFIX;
+  var MOCK_N = window.MOCK_N;
+  var DEFAULT_STT_API_KEY = "";
+  var DEFAULT_STT_API_URL = "https://api.openai.com/v1/audio/transcriptions";
+  document.title = "英语听力模拟试题 " + MOCK_N + " · 逐句复述";
+  var titleEl = document.getElementById("pageTitle");
+  if (titleEl) titleEl.textContent = "英语听力模拟试题 " + MOCK_N + " · 逐句复述";
+
+  function formatTime(sec) {
+    var s = Math.floor(sec);
+    var m = Math.floor(s / 60);
+    var r = s % 60;
+    return m.toString().padStart(2, "0") + ":" + r.toString().padStart(2, "0");
+  }
+
+  var audioEl = document.getElementById("audio");
+  var playerTrack = document.getElementById("playerTrack");
+  var playerFill = document.getElementById("playerFill");
+  var timeCurrent = document.getElementById("timeCurrent");
+  var timeTotal = document.getElementById("timeTotal");
+  var cuesContainer = document.getElementById("cues");
+  var reciteStatus = document.getElementById("reciteStatus");
+  var useSttApi = document.getElementById("useSttApi");
+  var sttApiConfig = document.getElementById("sttApiConfig");
+  var sttApiUrl = document.getElementById("sttApiUrl");
+  var sttApiKey = document.getElementById("sttApiKey");
+
+  audioEl.src = BASE + "/audio.mp3";
+  audioEl.onerror = function() { audioEl.onerror = null; audioEl.src = BASE + "/audio.m4a"; audioEl.load(); };
+  audioEl.load();
+
+  useSttApi.addEventListener("change", function() { sttApiConfig.hidden = !useSttApi.checked; });
+  if (localStorage.getItem(LS_PREFIX + "useSttApi") === "1") { useSttApi.checked = true; sttApiConfig.hidden = false; }
+  if (localStorage.getItem(LS_PREFIX + "sttApiUrl")) sttApiUrl.value = localStorage.getItem(LS_PREFIX + "sttApiUrl");
+  if (localStorage.getItem(LS_PREFIX + "sttApiKey")) sttApiKey.value = localStorage.getItem(LS_PREFIX + "sttApiKey");
+  if (DEFAULT_STT_API_URL && !sttApiUrl.value) sttApiUrl.value = DEFAULT_STT_API_URL;
+  if (DEFAULT_STT_API_KEY && !sttApiKey.value) sttApiKey.value = DEFAULT_STT_API_KEY;
+
+  function setStatus(msg, type) {
+    reciteStatus.textContent = msg;
+    reciteStatus.className = "recite-status" + (type ? " " + type : "");
+  }
+
+  function pctFromEvent(e) {
+    if (!playerTrack) return 0;
+    var rect = playerTrack.getBoundingClientRect();
+    var x = (e && (e.clientX != null)) ? e.clientX : (e && e.touches && e.touches[0] ? e.touches[0].clientX : rect.left);
+    var pct = ((x - rect.left) / rect.width) * 100;
+    return Math.max(0, Math.min(100, pct));
+  }
+  function seekToPercent(pct) {
+    pct = Math.max(0, Math.min(100, pct));
+    var d = audioEl.duration;
+    if (d && isFinite(d)) { audioEl.currentTime = (pct / 100) * d; return; }
+    var once = function() { audioEl.removeEventListener("loadedmetadata", once); updateDuration(); seekToPercent(pct); };
+    audioEl.addEventListener("loadedmetadata", once);
+    audioEl.load();
+  }
+  function updateDuration() {
+    var d = audioEl.duration;
+    if (d && isFinite(d)) timeTotal.textContent = formatTime(d);
+  }
+  audioEl.addEventListener("loadedmetadata", updateDuration);
+  audioEl.addEventListener("durationchange", updateDuration);
+  audioEl.addEventListener("timeupdate", function() {
+    var t = audioEl.currentTime, d = audioEl.duration;
+    var pct = (d && isFinite(d)) ? (t / d) * 100 : 0;
+    if (playerFill) playerFill.style.width = pct + "%";
+    timeCurrent.textContent = formatTime(t);
+    if (userPlayingCueIndex != null && cues[userPlayingCueIndex] && t >= cues[userPlayingCueIndex].end) {
+      audioEl.pause();
+    }
+    updateActiveCue(t);
+  });
+  var trackDragging = false;
+  if (playerTrack) {
+    playerTrack.addEventListener("mousedown", function(e) { e.preventDefault(); trackDragging = true; seekToPercent(pctFromEvent(e)); });
+  }
+  document.addEventListener("mousemove", function(e) {
+    if (!trackDragging || !playerTrack) return;
+    seekToPercent(pctFromEvent(e));
+  });
+  document.addEventListener("mouseup", function() { trackDragging = false; });
+  document.addEventListener("mouseleave", function() { trackDragging = false; });
+  if (playerTrack) {
+    playerTrack.addEventListener("touchstart", function(e) { trackDragging = true; seekToPercent(pctFromEvent(e)); }, { passive: true });
+    playerTrack.addEventListener("touchmove", function(e) { if (trackDragging) seekToPercent(pctFromEvent(e)); }, { passive: true });
+    playerTrack.addEventListener("touchend", function() { trackDragging = false; });
+  }
+  function seekToTime(t) {
+    var d = audioEl.duration;
+    if (d && isFinite(d)) { audioEl.currentTime = Math.max(0, Math.min(t, d)); audioEl.play(); return; }
+    var once = function() { audioEl.removeEventListener("loadedmetadata", once); audioEl.currentTime = Math.max(0, t); audioEl.play(); };
+    audioEl.addEventListener("loadedmetadata", once);
+    audioEl.load();
+  }
+
+  var cues = [];
+  var activeIndex = null;
+  var userPlayingCueIndex = null;
+  var revealedWordsByCue = {};
+  var revealedSentences = new Set();
+  var recitingForIndex = null;
+  var recognition = null;
+  var mediaRecorder = null;
+  var recordedChunks = [];
+
+  function tokenize(s) {
+    if (!s || !s.trim()) return [];
+    var t = s.toLowerCase().replace(/[\s.,;:!?"'()[\]{}\u2013\u2014\u201C\u201D]+/g, " ").trim();
+    return t.split(/\s+/).filter(Boolean);
+  }
+  function normWord(w) {
+    return (w || "").toLowerCase().replace(/'/g, "");
+  }
+  function saidContainsWord(saidLower, saidSet, refWord) {
+    if (!refWord) return false;
+    var w = refWord.toLowerCase();
+    var n = normWord(refWord);
+    if (saidSet[w] || saidSet[n]) return true;
+    if (saidLower.indexOf(w) >= 0 || saidLower.indexOf(n) >= 0) return true;
+    for (var key in saidSet) if (key === w || key === n || key.indexOf(w) === 0 || w.indexOf(key) === 0) return true;
+    return false;
+  }
+  function tokenizeZh(s) {
+    if (!s || !s.trim()) return [];
+    var out = [], i = 0;
+    while (i < s.length) {
+      var c = s[i];
+      if (/[\u4e00-\u9fff]/.test(c)) { out.push(c); i++; }
+      else if (/[a-zA-Z0-9]/.test(c)) { var w = ""; while (i < s.length && /[a-zA-Z0-9]/.test(s[i])) { w += s[i]; i++; } if (w) out.push(w.toLowerCase()); }
+      else i++;
+    }
+    return out;
+  }
+  function similarity(ref, said, isZh) {
+    var refTokens = isZh ? tokenizeZh(ref) : tokenize(ref);
+    var saidTokens = isZh ? tokenizeZh(said) : tokenize(said);
+    if (refTokens.length === 0) return saidTokens.length > 0 ? 0 : 1;
+    var saidSet = {};
+    for (var i = 0; i < saidTokens.length; i++) saidSet[saidTokens[i]] = true;
+    var hit = 0;
+    for (var j = 0; j < refTokens.length; j++) { if (saidSet[refTokens[j]]) hit++; }
+    return hit / refTokens.length;
+  }
+
+  function checkAndRevealForSentence(said, idx) {
+    said = (said || "").trim();
+    if (!said || idx == null || !cues[idx]) return false;
+    var cue = cues[idx];
+    var ref = cue.text || "";
+    if (!ref) return false;
+    var changed = false;
+    var refTokens = tokenize(ref);
+    var saidTokens = tokenize(said);
+    var saidSet = {};
+    for (var i = 0; i < saidTokens.length; i++) {
+      saidSet[saidTokens[i]] = true;
+      saidSet[normWord(saidTokens[i])] = true;
+    }
+    said.replace(/[a-zA-Z]+/g, function(m) { var l = m.toLowerCase(); saidSet[l] = true; saidSet[normWord(l)] = true; });
+    var saidLower = said.toLowerCase();
+    if (similarity(ref, said, false) >= 0.65) {
+      if (!revealedSentences.has(idx)) { revealedSentences.add(idx); changed = true; }
+    }
+    if (cue.zh && isMainlyChinese(said) && similarity(cue.zh, said, true) >= 0.5) {
+      if (!revealedSentences.has(idx)) { revealedSentences.add(idx); changed = true; }
+    }
+    if (!revealedWordsByCue[idx]) revealedWordsByCue[idx] = new Set();
+    for (var j = 0; j < refTokens.length; j++) {
+      var w = refTokens[j];
+      if (revealedWordsByCue[idx].has(w)) continue;
+      if (saidContainsWord(saidLower, saidSet, w)) {
+        revealedWordsByCue[idx].add(w);
+        changed = true;
+      }
+    }
+    if (changed) {
+      renderCues();
+      playSuccessSound();
+      setStatus("对了！继续复述或点「继续」播下一句。", "success");
+    } else {
+      setStatus("未匹配到本句中的词或整句，请再试。", "fail");
+    }
+    return changed;
+  }
+
+  function playSuccessSound() {
+    try {
+      var ctx = new (window.AudioContext || window.webkitAudioContext)();
+      var play = function(freq, start, dur) {
+        var o = ctx.createOscillator(); var g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.frequency.value = freq; o.type = "sine";
+        g.gain.setValueAtTime(0.15, start); g.gain.exponentialRampToValueAtTime(0.01, start + dur);
+        o.start(start); o.stop(start + dur);
+      };
+      play(523.25, 0, 0.08); play(659.25, 0.1, 0.12);
+    } catch (e) {}
+  }
+
+  function isMainlyChinese(text) {
+    if (!text || !text.trim()) return false;
+    var cjk = 0, total = 0;
+    for (var i = 0; i < text.length; i++) {
+      var c = text[i];
+      if (/[\u4e00-\u9fff]/.test(c)) cjk++;
+      if (/[a-zA-Z0-9\u4e00-\u9fff]/.test(c)) total++;
+    }
+    return total > 0 && cjk / total >= 0.5;
+  }
+
+  function wrapWordsWithReveal(text, cueIndex) {
+    if (!text) return document.createDocumentFragment();
+    var frag = document.createDocumentFragment();
+    if (isMainlyChinese(text)) {
+      var span = document.createElement("span");
+      span.className = "word-revealed";
+      span.textContent = text;
+      frag.appendChild(span);
+      return frag;
+    }
+    var lower = text.toLowerCase();
+    var sentenceRevealed = revealedSentences.has(cueIndex);
+    var revealed = revealedWordsByCue[cueIndex] || new Set();
+    var i = 0;
+    while (i < text.length) {
+      var nextSpace = text.indexOf(" ", i + 1);
+      var end = nextSpace === -1 ? text.length : nextSpace + 1;
+      var word = lower.slice(i, end).replace(/^[\s.,;:!?"']+|[\s.,;:!?"']+$/g, "");
+      var rev = sentenceRevealed || (word && (revealed.has(word) || revealed.has(normWord(word))));
+      if (!rev && word && word.indexOf("'") >= 0) {
+        var parts = word.split("'");
+        if (parts.length === 2 && revealed.has(parts[0]) && revealed.has(parts[1])) rev = true;
+      }
+      var span = document.createElement("span");
+      span.className = rev ? "word-revealed" : "word-blurred";
+      span.textContent = text.slice(i, end);
+      frag.appendChild(span);
+      i = end;
+    }
+    return frag;
+  }
+
+  function renderCues() {
+    cuesContainer.innerHTML = "";
+    cues.forEach(function(cue, index) {
+      var row = document.createElement("div");
+      row.className = "cue-row";
+      row.setAttribute("data-index", String(index));
+      if (revealedSentences.has(index)) row.classList.add("revealed");
+
+      var timeSpan = document.createElement("span");
+      timeSpan.className = "time";
+      timeSpan.textContent = formatTime(cue.start) + "\u2013" + formatTime(cue.end);
+
+      var lines = document.createElement("div");
+      lines.className = "lines";
+      var block = document.createElement("div");
+      block.className = "sentence-block";
+      var mainText = (cue.text || "");
+      if (isMainlyChinese(mainText) && cue.zh) mainText = cue.zh;
+      block.appendChild(wrapWordsWithReveal(mainText, index));
+      /* 只对英文句显示中文翻译行，中文句不重复显示 */
+      if (cue.zh && !isMainlyChinese(cue.text || "")) {
+        var zhLine = document.createElement("div");
+        zhLine.className = "zh-line" + (revealedSentences.has(index) ? "" : " zh-blurred");
+        zhLine.textContent = cue.zh;
+        block.appendChild(zhLine);
+      }
+      lines.appendChild(block);
+
+      var actions = document.createElement("div");
+      actions.className = "row-actions";
+      var btnOriginal = document.createElement("button");
+      btnOriginal.type = "button";
+      btnOriginal.className = "btn-original";
+      btnOriginal.textContent = "原文";
+      btnOriginal.dataset.index = String(index);
+      var btnRecite = document.createElement("button");
+      btnRecite.type = "button";
+      btnRecite.className = "btn-recite";
+      btnRecite.textContent = "复述";
+      btnRecite.dataset.index = String(index);
+      var btnContinue = document.createElement("button");
+      btnContinue.type = "button";
+      btnContinue.className = "btn-continue";
+      btnContinue.textContent = "继续";
+      btnContinue.dataset.index = String(index);
+      actions.appendChild(btnOriginal);
+      actions.appendChild(btnRecite);
+      actions.appendChild(btnContinue);
+      lines.appendChild(actions);
+
+      row.appendChild(timeSpan);
+      row.appendChild(lines);
+      cuesContainer.appendChild(row);
+    });
+
+    cuesContainer.querySelectorAll(".btn-recite").forEach(function(btn) {
+      btn.addEventListener("click", function(e) { e.stopPropagation(); startRecite(parseInt(btn.dataset.index, 10)); });
+    });
+    cuesContainer.querySelectorAll(".btn-continue").forEach(function(btn) {
+      btn.addEventListener("click", function(e) {
+        e.stopPropagation();
+        var idx = parseInt(btn.dataset.index, 10);
+        if (idx + 1 < cues.length) {
+          userPlayingCueIndex = idx + 1;
+          seekToTime(cues[idx + 1].start - 0.2);
+        } else { audioEl.pause(); userPlayingCueIndex = null; setStatus("已到最后一句。", "success"); }
+      });
+    });
+    cuesContainer.querySelectorAll(".btn-original").forEach(function(btn) {
+      btn.addEventListener("click", function(e) {
+        e.stopPropagation();
+        var idx = parseInt(btn.dataset.index, 10);
+        if (isNaN(idx) || !cues[idx]) return;
+        revealedSentences.add(idx);
+        if (!revealedWordsByCue[idx]) revealedWordsByCue[idx] = new Set();
+        var ref = (cues[idx].text || "").trim();
+        var tokens = tokenize(ref);
+        for (var j = 0; j < tokens.length; j++) revealedWordsByCue[idx].add(tokens[j]);
+        renderCues();
+      });
+    });
+  }
+
+  function updateActiveCue(t) {
+    if (!cues.length) return;
+    var idx = null;
+    if (audioEl.paused && userPlayingCueIndex != null) {
+      idx = userPlayingCueIndex;
+    } else {
+      for (var i = 0; i < cues.length; i++) {
+        var c = cues[i];
+        if (t >= c.start && t < c.end) { idx = i; break; }
+      }
+    }
+    if (idx === null || idx === activeIndex) return;
+    activeIndex = idx;
+    var rows = cuesContainer.querySelectorAll(".cue-row");
+    rows.forEach(function(row, i) {
+      if (i === idx) {
+        row.classList.add("active");
+        row.scrollIntoView({ behavior: "smooth", block: "center" });
+      } else row.classList.remove("active");
+    });
+  }
+
+  cuesContainer.addEventListener("click", function(e) {
+    if (e.target.closest(".btn-recite") || e.target.closest(".btn-continue") || e.target.closest(".btn-original")) return;
+    var row = e.target.closest(".cue-row");
+    if (!row) return;
+    var idx = parseInt(row.getAttribute("data-index"), 10);
+    if (isNaN(idx) || !cues[idx]) return;
+    userPlayingCueIndex = idx;
+    seekToTime(cues[idx].start - 0.2);
+  });
+
+  function startRecite(idx) {
+    if (useSttApi.checked && mediaRecorder && mediaRecorder.state === "recording" && recitingForIndex === idx) {
+      stopRecordingAndSend();
+      return;
+    }
+    recitingForIndex = idx;
+    if (useSttApi.checked) {
+      if (!(sttApiKey.value || "").trim()) {
+        setStatus("请先填写 API Key（上方「使用外部语音识别 API」展开后填写），保存后再点「复述」。", "fail");
+        recitingForIndex = null;
+        return;
+      }
+      startRecordingForApi();
+      return;
+    }
+    startBrowserRecite(idx);
+  }
+
+  function startBrowserRecite(idx) {
+    audioEl.pause();
+    var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      setStatus("浏览器不支持语音识别，请勾选「使用外部语音识别 API」。", "fail");
+      recitingForIndex = null;
+      return;
+    }
+    recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = "zh-CN";
+    setStatus("正在听…（说本句或其中的词）", "");
+    cuesContainer.querySelectorAll(".btn-recite").forEach(function(btn) {
+      if (parseInt(btn.dataset.index, 10) === idx) btn.classList.add("listening");
+    });
+    recognition.onresult = function(event) {
+      var text = (event.results[0] && event.results[0][0]) ? event.results[0][0].transcript : "";
+      recognition = null;
+      cuesContainer.querySelectorAll(".btn-recite").forEach(function(b) { b.classList.remove("listening"); });
+      if (text) checkAndRevealForSentence(text, recitingForIndex);
+      else setStatus("未识别到话，请再试。", "fail");
+      recitingForIndex = null;
+    };
+    recognition.onerror = function(e) {
+      recognition = null;
+      cuesContainer.querySelectorAll(".btn-recite").forEach(function(b) { b.classList.remove("listening"); });
+      var msg = (e && e.error === "not-allowed") ? "请允许麦克风权限（地址栏左侧或弹窗），或勾选「使用外部语音识别 API」并填写 Key。" : "浏览器语音识别不可用，请用 Chrome 或勾选「使用外部语音识别 API」并填写 OpenAI Key。";
+      setStatus(msg, "fail");
+      recitingForIndex = null;
+    };
+    recognition.onend = function() {
+      if (recognition) {
+        cuesContainer.querySelectorAll(".btn-recite").forEach(function(b) { b.classList.remove("listening"); });
+        recitingForIndex = null;
+      }
+    };
+    recognition.start();
+  }
+
+  function startRecordingForApi() {
+    audioEl.pause();
+    recordedChunks = [];
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream) {
+      mediaRecorder = new MediaRecorder(stream);
+      mediaRecorder.ondataavailable = function(e) { if (e.data.size) recordedChunks.push(e.data); };
+      mediaRecorder.onstop = function() {
+        stream.getTracks().forEach(function(t) { t.stop(); });
+        var blob = new Blob(recordedChunks, { type: "audio/webm" });
+        sendToSttApi(blob);
+      };
+      mediaRecorder.start();
+      setStatus("正在听… 请说话，再点一次「复述」停止并识别。", "");
+      cuesContainer.querySelectorAll(".btn-recite").forEach(function(btn) {
+        if (parseInt(btn.dataset.index, 10) === recitingForIndex) { btn.textContent = "停止并识别"; btn.classList.add("listening"); }
+      });
+    }).catch(function() {
+      setStatus("无法获取麦克风权限。", "fail");
+      recitingForIndex = null;
+    });
+  }
+
+  function stopRecordingAndSend() {
+    if (!mediaRecorder || mediaRecorder.state !== "recording") return;
+    mediaRecorder.stop();
+    mediaRecorder = null;
+    cuesContainer.querySelectorAll(".btn-recite").forEach(function(b) { b.textContent = "复述"; b.classList.remove("listening"); });
+    setStatus("识别中…", "");
+  }
+
+  function sendToSttApi(blob) {
+    var url = (sttApiUrl.value || "").trim();
+    if (!url) { setStatus("请填写语音识别 API 地址。", "fail"); recitingForIndex = null; return; }
+    localStorage.setItem(LS_PREFIX + "useSttApi", useSttApi.checked ? "1" : "0");
+    localStorage.setItem(LS_PREFIX + "sttApiUrl", url);
+    if (sttApiKey.value) localStorage.setItem(LS_PREFIX + "sttApiKey", sttApiKey.value);
+    var form = new FormData();
+    form.append("file", blob, "audio.webm");
+    form.append("model", "whisper-1");
+    var opts = { method: "POST", body: form };
+    var key = (sttApiKey.value || "").trim();
+    if (key) opts.headers = { "Authorization": "Bearer " + key };
+    fetch(url, opts).then(function(r) {
+      return r.text().then(function(raw) {
+        var data = {};
+        try { data = JSON.parse(raw); } catch (e) {}
+        if (!r.ok) throw new Error((data.error && data.error.message) ? data.error.message : "HTTP " + r.status);
+        return data;
+      });
+    }).then(function(data) {
+      var text = (data && (data.text !== undefined ? data.text : data.transcript)) || "";
+      if (text && text.trim()) checkAndRevealForSentence(text.trim(), recitingForIndex);
+      else setStatus("识别结果为空。", "fail");
+      recitingForIndex = null;
+    }).catch(function(err) {
+      setStatus("识别失败：" + (err.message || ""), "fail");
+      recitingForIndex = null;
+    });
+  }
+
+
+  Promise.all([
+    fetch(BASE + "/cues-i18n.json").then(function(r) { return r.ok ? r.json() : null; }).catch(function() { return null; }),
+    fetch(BASE + "/cues.json").then(function(r) { return r.json(); })
+  ]).then(function(results) {
+    var i18n = results[0];
+    var fallback = results[1];
+    cues = (Array.isArray(i18n) && i18n.length && i18n[0].zh) ? i18n : (Array.isArray(fallback) ? fallback : []);
+    renderCues();
+  }).catch(function(err) {
+    console.error(err);
+    cuesContainer.innerHTML = "<p style='color: var(--muted);'>加载字幕失败。</p>";
+  });
+</script>
+</body>
+</html>

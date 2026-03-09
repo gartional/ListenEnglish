@@ -35,7 +35,9 @@ def main() -> None:
     dir_path = args.dir if args.dir.is_absolute() else ROOT / args.dir
     audio_path = dir_path / "audio.mp3"
     if not audio_path.exists():
-        print("Not found:", audio_path, file=sys.stderr)
+        audio_path = dir_path / "audio.m4a"
+    if not audio_path.exists():
+        print("Not found: audio.mp3 / audio.m4a in", dir_path, file=sys.stderr)
         sys.exit(1)
     out_path = dir_path / "cues.json"
     generate_cues(audio_path, out_path)

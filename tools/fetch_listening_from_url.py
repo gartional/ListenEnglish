@@ -5,6 +5,7 @@ Usage: python fetch_listening_from_url.py --url "https://..." --out-dir "content
 import argparse
 import re
 import sys
+import time
 from pathlib import Path
 from urllib.parse import urljoin, urlparse
 
@@ -49,13 +50,36 @@ def download_audio(url: str, out_path: Path, session: requests.Session, referer:
     headers = {}
     if referer:
         headers["Referer"] = referer
-    r = session.get(url, stream=True, timeout=120, headers=headers)
-    r.raise_for_status()
+    # 连接 15 秒超时，读流每 600 秒超时（国内 CDN 可能较慢，避免中途断掉）
+    timeout = (15, 600)
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(out_path, "wb") as f:
-        for chunk in r.iter_content(chunk_size=65536):
-            if chunk:
-                f.write(chunk)
+    last_err = None
+    for attempt in range(3):
+        try:
+            if attempt > 0:
+                print("  重试 {}/3 ...".format(attempt + 1), flush=True)
+            r = session.get(url, stream=True, timeout=timeout, headers=headers)
+            r.raise_for_status()
+            total = 0
+            last_mb = -1
+            with open(out_path, "wb") as f:
+                for chunk in r.iter_content(chunk_size=262144):
+                    if chunk:
+                        f.write(chunk)
+                        total += len(chunk)
+                        mb = total // (1024 * 1024)
+                        if mb > last_mb:
+                            print(".", end="", flush=True)
+                            last_mb = mb
+            print(" {} MB".format(last_mb + 1) if last_mb >= 0 else "", flush=True)
+            return out_path
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, OSError) as e:
+            last_err = e
+            if attempt < 2:
+                print("  超时/断线，5 秒后重试 ...", flush=True)
+                time.sleep(5)
+                continue
+            raise last_err
     return out_path
 
 
@@ -73,13 +97,28 @@ def transcribe_audio(audio_path: Path) -> str:
     return "\n".join(lines)
 
 
+def _existing_audio_path(out_dir: Path) -> Path | None:
+    """若目录里已有 audio.mp3 或 audio.m4a 则返回路径，否则 None。"""
+    for name in ("audio.mp3", "audio.m4a"):
+        p = out_dir / name
+        if p.exists():
+            return p
+    return None
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Fetch listening page, download audio, transcribe.")
     parser.add_argument("--url", required=True, help="Page URL (e.g. from QR code)")
     parser.add_argument("--out-dir", type=Path, default=Path("content/mock17"), help="Output directory")
+    parser.add_argument("--download-only", action="store_true", help="只下载音频，不转写")
     args = parser.parse_args()
     out_dir = args.out_dir if args.out_dir.is_absolute() else ROOT / args.out_dir
     out_dir.mkdir(parents=True, exist_ok=True)
+
+    existing = _existing_audio_path(out_dir)
+    if args.download_only and existing:
+        print("已有音频，跳过:", existing, flush=True)
+        return
 
     session = requests.Session()
     session.headers.update({
@@ -88,37 +127,44 @@ def main() -> None:
         "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
     })
 
-    print("Fetching page:", args.url)
-    r = session.get(args.url, timeout=15)
-    r.raise_for_status()
-    r.encoding = r.apparent_encoding or "utf-8"
-    soup = BeautifulSoup(r.text, "html.parser")
+    if not existing:
+        print("Fetching page:", args.url)
+        r = session.get(args.url, timeout=15)
+        r.raise_for_status()
+        r.encoding = r.apparent_encoding or "utf-8"
+        soup = BeautifulSoup(r.text, "html.parser")
 
-    audio_urls = find_audio_urls(soup, args.url)
-    if not audio_urls:
-        print("No audio URL found on page. Saving HTML for inspection.", file=sys.stderr)
-        (out_dir / "page.html").write_text(r.text, encoding="utf-8")
-        sys.exit(1)
+        audio_urls = find_audio_urls(soup, args.url)
+        if not audio_urls:
+            print("No audio URL found on page. Saving HTML for inspection.", file=sys.stderr)
+            (out_dir / "page.html").write_text(r.text, encoding="utf-8")
+            sys.exit(1)
 
-    # Prefer first .mp3 or .m4a
-    chosen = None
-    for u in audio_urls:
-        if re.search(r"\.(mp3|m4a)(\?|$)", u, re.I):
-            chosen = u
-            break
-    if not chosen:
-        chosen = audio_urls[0]
+        chosen = None
+        for u in audio_urls:
+            if re.search(r"\.(mp3|m4a)(\?|$)", u, re.I):
+                chosen = u
+                break
+        if not chosen:
+            chosen = audio_urls[0]
 
-    ext = "mp3" if "mp3" in chosen.lower() else "m4a" if "m4a" in chosen.lower() else "audio"
-    if not ext.endswith(("3", "a")):
-        ext = "mp3"
-    audio_path = out_dir / f"audio.{ext}"
-    print("Downloading:", chosen[:80] + "..." if len(chosen) > 80 else chosen)
-    download_audio(chosen, audio_path, session, referer=args.url)
-    print("Saved:", audio_path)
+        ext = "mp3" if "mp3" in chosen.lower() else "m4a" if "m4a" in chosen.lower() else "audio"
+        if not ext.endswith(("3", "a")):
+            ext = "mp3"
+        audio_path = out_dir / f"audio.{ext}"
+        print("Downloading (超时10分钟，失败自动重试3次):", chosen[:60] + "..." if len(chosen) > 60 else chosen, flush=True)
+        download_audio(chosen, audio_path, session, referer=args.url)
+        print("Saved:", audio_path, flush=True)
+    else:
+        audio_path = existing
+        print("已有音频，跳过下载:", audio_path, flush=True)
 
-    print("Transcribing (faster-whisper)...")
+    if args.download_only:
+        return
+
+    print("Transcribing (faster-whisper，约 1～2 分钟)...", flush=True)
     transcript = transcribe_audio(audio_path)
+    print("Transcribe 完成.", flush=True)
     transcript_path = out_dir / "transcript.txt"
     transcript_path.write_text(transcript, encoding="utf-8")
     print("Transcript saved:", transcript_path)

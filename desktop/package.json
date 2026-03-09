@@ -1,0 +1,30 @@
+{
+  "name": "listen-english",
+  "version": "1.0.0",
+  "description": "英语听力模拟试题 17/30 逐句复述",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "copy": "node copy-app.js",
+    "pack": "npm run copy && electron-builder --mac --dir",
+    "dist": "npm run copy && electron-builder --mac"
+  },
+  "build": {
+    "appId": "com.listenenglish.app",
+    "productName": "ListenEnglish",
+    "mac": {
+      "category": "public.app-category.education",
+      "target": ["dmg", "zip"],
+      "icon": null
+    },
+    "files": ["main.js", "app/**"],
+    "directories": { "output": "dist" }
+  },
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.0.0"
+  },
+  "dependencies": {
+    "express": "^4.18.0"
+  }
+}
