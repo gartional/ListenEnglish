@@ -138,6 +138,7 @@
   var timeTotal = document.getElementById("timeTotal");
   var cuesContainer = document.getElementById("cues");
   var reciteStatus = document.getElementById("reciteStatus");
+  var debugSeek = null;
   var useSttApi = document.getElementById("useSttApi");
   var sttApiConfig = document.getElementById("sttApiConfig");
   var sttApiUrl = document.getElementById("sttApiUrl");
@@ -157,6 +158,26 @@
   function setStatus(msg, type) {
     reciteStatus.textContent = msg;
     reciteStatus.className = "recite-status" + (type ? " " + type : "");
+  }
+
+  var DEBUG_SEEK = /[?&]debug=1(&|$)/.test(location.search);
+  var _debugLines = [];
+  function setDebug(msg) {
+    if (!DEBUG_SEEK) return;
+    if (!debugSeek) {
+      debugSeek = document.createElement("pre");
+      debugSeek.style.fontSize = "12px";
+      debugSeek.style.color = "#94a3b8";
+      debugSeek.style.marginTop = "6px";
+      debugSeek.style.whiteSpace = "pre-wrap";
+      debugSeek.style.maxHeight = "140px";
+      debugSeek.style.overflow = "auto";
+      var wrap = document.querySelector(".player-wrap");
+      if (wrap) wrap.appendChild(debugSeek);
+    }
+    _debugLines.push(msg);
+    if (_debugLines.length > 12) _debugLines = _debugLines.slice(_debugLines.length - 12);
+    if (debugSeek) debugSeek.textContent = _debugLines.join("\n");
   }
 
   function pctFromEvent(e) {
@@ -205,12 +226,57 @@
     playerTrack.addEventListener("touchmove", function(e) { if (trackDragging) seekToPercent(pctFromEvent(e)); }, { passive: true });
     playerTrack.addEventListener("touchend", function() { trackDragging = false; });
   }
-  function seekToTime(t) {
+  // 关键：尽量在点击事件同步栈里完成 seek + play（避免用户手势限制）。
+  var _pendingSeek = null;
+  function _playSafe() {
+    var p = audioEl.play();
+    if (p && typeof p.catch === "function") p.catch(function() {});
+  }
+  function _applySeekNow() {
+    if (_pendingSeek == null) return;
+    var t = Math.max(0, _pendingSeek);
     var d = audioEl.duration;
-    if (d && isFinite(d)) { audioEl.currentTime = Math.max(0, Math.min(t, d)); audioEl.play(); return; }
-    var once = function() { audioEl.removeEventListener("loadedmetadata", once); audioEl.currentTime = Math.max(0, t); audioEl.play(); };
+    var target = (d && isFinite(d)) ? Math.max(0, Math.min(t, d)) : t;
+    try {
+      if (typeof audioEl.fastSeek === "function") audioEl.fastSeek(target);
+      else audioEl.currentTime = target;
+      // 有些浏览器第一次设置会被忽略，立刻再设一次更稳
+      if (typeof audioEl.fastSeek !== "function") audioEl.currentTime = target;
+    } catch (e) {}
+    setDebug("seek apply: target=" + target.toFixed(2) + " cur=" + (audioEl.currentTime || 0).toFixed(2) + " ready=" + audioEl.readyState + " src=" + (audioEl.currentSrc || audioEl.src || ""));
+  }
+  function seekToTime(t) {
+    _pendingSeek = Math.max(0, t || 0);
+
+    setDebug("click seek: t=" + _pendingSeek.toFixed(2) + " ready=" + audioEl.readyState + " cur=" + (audioEl.currentTime || 0).toFixed(2));
+
+    // 先尽力在同步栈里完成：先 seek 再 play（旧实现更稳定）
+    if (audioEl.readyState >= 1) _applySeekNow();
+    _playSafe();
+    // play 之后再补一刀（仍在同一同步栈里）
+    if (audioEl.readyState >= 1) _applySeekNow();
+    if (audioEl.readyState >= 1) return;
+
+    // metadata 还没到：等它到，再 seek（不在回调里 play，避免丢失手势）
+    var once = function() {
+      audioEl.removeEventListener("loadedmetadata", once);
+      audioEl.removeEventListener("loadeddata", once);
+      audioEl.removeEventListener("canplay", once);
+      _applySeekNow();
+    };
     audioEl.addEventListener("loadedmetadata", once);
-    audioEl.load();
+    audioEl.addEventListener("loadeddata", once);
+    audioEl.addEventListener("canplay", once);
+    // 不主动 audioEl.load()：某些浏览器会把播放位置重置回 0
+  }
+
+  if (DEBUG_SEEK) {
+    audioEl.addEventListener("loadedmetadata", function() { setDebug("event loadedmetadata: dur=" + (audioEl.duration || 0).toFixed(2) + " ready=" + audioEl.readyState); });
+    audioEl.addEventListener("seeked", function() { setDebug("event seeked: cur=" + (audioEl.currentTime || 0).toFixed(2) + " ready=" + audioEl.readyState); });
+    audioEl.addEventListener("timeupdate", function() {
+      // 只在 very early 阶段刷一次，避免刷屏
+      if ((audioEl.currentTime || 0) < 1.2) setDebug("timeupdate: cur=" + (audioEl.currentTime || 0).toFixed(2) + " ready=" + audioEl.readyState);
+    });
   }
 
   var cues = [];

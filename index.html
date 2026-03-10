@@ -11,6 +11,7 @@
       --text: #e2e8f0;
       --muted: #94a3b8;
       --accent: #38bdf8;
+      --danger: #f87171;
     }
     * { box-sizing: border-box; }
     body {
@@ -24,6 +25,21 @@
     .container { max-width: 560px; margin: 0 auto; }
     h1 { font-size: 20px; font-weight: 600; margin-bottom: 8px; color: #fff; }
     p.sub { font-size: 14px; color: var(--muted); margin-bottom: 20px; }
+    .toolbar { display: flex; align-items: center; gap: 12px; margin: 10px 0 14px; flex-wrap: wrap; }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: rgba(30, 41, 59, 0.45);
+      border: 1px solid rgba(15, 23, 42, 0.6);
+      color: var(--text);
+      font-size: 13px;
+      user-select: none;
+    }
+    .chip input { transform: translateY(1px); }
+    .hint { font-size: 12px; color: var(--muted); }
     .nav-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
     .nav-grid a {
       display: block;
@@ -42,20 +58,132 @@
       background: rgba(30, 41, 59, 0.6);
       border-color: rgba(56, 189, 248, 0.3);
     }
+    .nav-grid a.disabled {
+      opacity: 0.45;
+      filter: grayscale(0.15);
+      pointer-events: none;
+    }
+    .nav-grid a.ready {
+      border-color: rgba(56, 189, 248, 0.35);
+    }
+    .status-row { display: flex; gap: 10px; align-items: baseline; margin-top: 10px; }
+    .status { font-size: 12px; color: var(--muted); }
+    .status strong { color: #fff; font-weight: 600; }
+    .status.bad { color: var(--danger); }
   </style>
 </head>
 <body>
 <div class="container">
   <h1>英语听力 · 模拟试题</h1>
-  <p class="sub">选择试题进入逐句复述练习（1–48 需先运行批量抓取生成 content/mock01…mock48）</p>
+  <p class="sub">选择试题进入逐句复述练习。首页会自动检测每套试题是否已下载并生成字幕/分段。</p>
+  <div class="toolbar">
+    <label class="chip">
+      <input type="checkbox" id="onlyReady" />
+      只看已准备好的
+    </label>
+    <span class="hint">“已准备好” = 有 `cues.json` + 音频</span>
+  </div>
   <nav class="nav-grid" id="nav"></nav>
+  <div class="status-row">
+    <div class="status" id="statusLeft">检测中…</div>
+    <div class="status" id="statusRight"></div>
+  </div>
 </div>
 <script>
-  var list = [];
-  for (var i = 1; i <= 48; i++) {
-    list.push('<a href="practice.html?mock=' + i + '">' + i + '</a>');
+  var nav = document.getElementById("nav");
+  var onlyReady = document.getElementById("onlyReady");
+  var statusLeft = document.getElementById("statusLeft");
+  var statusRight = document.getElementById("statusRight");
+
+  function pad2(n) { return String(n).padStart(2, "0"); }
+  function baseForMock(n) { return "content/mock" + pad2(n); }
+
+  function makeLink(n) {
+    var a = document.createElement("a");
+    a.href = "practice.html?mock=" + n;
+    a.textContent = String(n);
+    a.dataset.mock = String(n);
+    a.className = "disabled";
+    a.title = "未检测";
+    return a;
   }
-  document.getElementById("nav").innerHTML = list.join("");
+
+  var links = [];
+  for (var i = 1; i <= 48; i++) {
+    var a = makeLink(i);
+    links.push(a);
+    nav.appendChild(a);
+  }
+
+  function setVisibleByReady() {
+    var wantOnly = !!onlyReady.checked;
+    for (var i = 0; i < links.length; i++) {
+      var a = links[i];
+      var ready = a.classList.contains("ready");
+      a.style.display = (!wantOnly || ready) ? "" : "none";
+    }
+  }
+
+  onlyReady.addEventListener("change", setVisibleByReady);
+
+  async function exists(url) {
+    try {
+      var r = await fetch(url, { method: "HEAD", cache: "no-store" });
+      if (r.ok) return true;
+      // 某些静态服务器不支持 HEAD，回退到 GET（只拉 headers）
+      r = await fetch(url, { method: "GET", cache: "no-store" });
+      return r.ok;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  async function checkMock(n) {
+    var base = baseForMock(n);
+    var cuesOk = await exists(base + "/cues.json");
+    var audioOk = await exists(base + "/audio.mp3");
+    if (!audioOk) audioOk = await exists(base + "/audio.m4a");
+    return cuesOk && audioOk;
+  }
+
+  async function runChecks() {
+    var done = 0;
+    var readyCount = 0;
+    statusLeft.textContent = "检测中…";
+    statusRight.textContent = "";
+
+    // 并发不要太高，避免浏览器/服务器卡住
+    var concurrency = 6;
+    var idx = 0;
+
+    async function worker() {
+      while (idx < 48) {
+        var n = ++idx;
+        var a = links[n - 1];
+        var ok = await checkMock(n);
+        done++;
+        if (ok) {
+          readyCount++;
+          a.classList.add("ready");
+          a.classList.remove("disabled");
+          a.title = "已准备好";
+        } else {
+          a.title = "未准备好（缺 cues 或音频）";
+        }
+        statusLeft.innerHTML = "已检测 <strong>" + done + "/48</strong>";
+        statusRight.textContent = "已准备好: " + readyCount;
+        setVisibleByReady();
+      }
+    }
+
+    var workers = [];
+    for (var i = 0; i < concurrency; i++) workers.push(worker());
+    await Promise.all(workers);
+    statusLeft.innerHTML = "检测完成：已准备好 <strong>" + readyCount + "/48</strong>";
+    if (readyCount === 0) statusLeft.classList.add("bad");
+  }
+
+  runChecks();
 </script>
 </body>
 </html>
